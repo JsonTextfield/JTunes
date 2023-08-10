@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">JTunes</string>
+    <string name="search">Search</string>
+    <string name="songs">Songs</string>
+    <string name="artists">Artists</string>
+    <string name="albums">Albums</string>
+    <string name="genres">Genres</string>
+    <string name="settings">Settings</string>
+    <string name="more">More</string>
+    <string name="about">About</string>
+    <string name="playlists">Playlists</string>
+    <string name="stop">Stop</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="skip_forward">Skip forward</string>
+    <string name="skip_backward">Skip backward</string>
+</resources>
