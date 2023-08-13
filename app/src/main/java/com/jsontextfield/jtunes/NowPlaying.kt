@@ -2,6 +2,7 @@ package com.jsontextfield.jtunes
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -42,11 +43,15 @@ fun NowPlaying(
     song: Song, modifier: Modifier = Modifier,
     onSkipForward: () -> Unit = {},
     onSkipBackward: () -> Unit = {},
+    onPlayPause: (isPlaying: Boolean) -> Unit = {},
+    onClick: () -> Unit = {},
 ) {
     NowPlaying(
         title = song.title, artist = song.artist, modifier = modifier,
         onSkipForward = onSkipForward,
-        onSkipBackward = onSkipBackward
+        onSkipBackward = onSkipBackward,
+        onPlayPause = onPlayPause,
+        onClick = onClick,
     )
 }
 
@@ -59,9 +64,11 @@ fun NowPlaying(
     color: Color = if (isSystemInDarkTheme()) Color.DarkGray else Color.LightGray,
     onSkipForward: () -> Unit = {},
     onSkipBackward: () -> Unit = {},
+    onPlayPause: (isPlaying: Boolean) -> Unit = {},
+    onClick: () -> Unit = {},
 ) {
     Surface(modifier = modifier.combinedClickable {
-
+        onClick.invoke()
     }
     ) {
         Row(
@@ -92,13 +99,20 @@ fun NowPlaying(
                     .weight(0.7f)
                     .padding(horizontal = 10.dp)
             ) {
-                Text(title, overflow = TextOverflow.Ellipsis, fontSize = 14.sp, maxLines = 1)
+                Text(
+                    title,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    modifier = Modifier.basicMarquee(),
+                )
                 Text(
                     artist,
                     overflow = TextOverflow.Ellipsis,
                     color = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
                     fontSize = 10.sp,
                     maxLines = 1,
+                    modifier = Modifier.basicMarquee(),
                 )
             }
             Row {
@@ -109,15 +123,12 @@ fun NowPlaying(
                 ) {
                     Icon(Icons.Rounded.SkipPrevious, "")
                 }
-                var icon by remember { mutableStateOf(Icons.Rounded.Pause) }
+                var isPlaying by remember { mutableStateOf(true) }
                 IconButton(onClick = {
-                    icon = if (icon == Icons.Rounded.Pause) {
-                        Icons.Rounded.PlayArrow
-                    } else {
-                        Icons.Rounded.Pause
-                    }
+                    isPlaying = !isPlaying
+                    onPlayPause.invoke(isPlaying)
                 }, modifier = Modifier.align(Alignment.CenterVertically)) {
-                    Icon(icon, "")
+                    Icon(if (!isPlaying) Icons.Rounded.PlayArrow else Icons.Rounded.Pause, "")
                 }
                 IconButton(
                     onClick = onSkipForward,
