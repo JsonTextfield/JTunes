@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.menu
+package com.jsontextfield.jtunes.ui.components.menu
 
 import android.util.Log
 import androidx.compose.foundation.layout.Box
@@ -29,7 +29,7 @@ fun ActionModeMenu(actions: List<Action>, onItemSelected: () -> Unit) {
                 tooltip = action.toolTip,
                 visible = action.condition
             ) {
-                action.onClick?.invoke()
+                action.onClick()
                 onItemSelected()
             }
         }

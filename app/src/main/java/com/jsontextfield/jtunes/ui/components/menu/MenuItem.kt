@@ -1,19 +1,18 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.jsontextfield.jtunes.ui.menu
+package com.jsontextfield.jtunes.ui.components.menu
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun MenuItem(icon: ImageVector, tooltip: String, visible: Boolean = true, onClick: () -> Unit) {
+fun MenuItem(icon: ImageVector, tooltip: String, visible: Boolean = true, onClick: () -> Unit = {}) {
     AnimatedVisibility(
         visible = visible,
         content = {
@@ -26,7 +25,6 @@ fun MenuItem(icon: ImageVector, tooltip: String, visible: Boolean = true, onClic
                         Icon(icon, tooltip)
                     },
                     onClick = onClick,
-                    colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White)
                 )
             }
         }

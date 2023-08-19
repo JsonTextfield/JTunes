@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.menu
+package com.jsontextfield.jtunes.ui.components.menu
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check

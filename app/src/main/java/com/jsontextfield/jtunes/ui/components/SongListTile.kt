@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui
+package com.jsontextfield.jtunes.ui.components
 
 import android.content.ContentUris
 import android.graphics.Bitmap
@@ -59,7 +59,7 @@ fun SongListTile(
     onClick: () -> Unit = {}
 ) {
     Surface(modifier = Modifier.combinedClickable {
-        onClick.invoke()
+        onClick()
     }
     ) {
         Row(
@@ -89,8 +89,8 @@ fun SongListTile(
                 if (bitmap != null) {
                     Image(
                         bitmap = bitmap!!.asImageBitmap(),
-                        contentDescription = "",
-                        modifier = Modifier.fillMaxSize()
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 } else {
                     Box(
@@ -100,7 +100,8 @@ fun SongListTile(
                     ) {
                         Icon(
                             modifier = Modifier.align(Alignment.Center),
-                            imageVector = Icons.Rounded.MusicNote, contentDescription = "",
+                            imageVector = Icons.Rounded.MusicNote,
+                            contentDescription = null,
                         )
                     }
                 }

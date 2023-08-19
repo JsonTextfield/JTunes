@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui
+package com.jsontextfield.jtunes.ui.components
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
@@ -31,7 +31,7 @@ fun CoverArt(bitmap: Bitmap?) {
         if (bitmap != null) {
             Image(
                 bitmap = bitmap.asImageBitmap(),
-                contentDescription = "",
+                contentDescription = null,
                 modifier = Modifier.fillMaxSize()
             )
         } else {
@@ -45,7 +45,7 @@ fun CoverArt(bitmap: Bitmap?) {
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxSize(0.5f),
-                    imageVector = Icons.Rounded.MusicNote, contentDescription = "",
+                    imageVector = Icons.Rounded.MusicNote, contentDescription = null,
                 )
             }
         }
@@ -62,8 +62,8 @@ fun CoverArtSmall(bitmap: Bitmap?) {
     ) {
         if (bitmap != null) {
             Image(
-                bitmap = bitmap!!.asImageBitmap(),
-                contentDescription = "",
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
                 modifier = Modifier.fillMaxSize()
             )
         } else {
@@ -74,7 +74,8 @@ fun CoverArtSmall(bitmap: Bitmap?) {
             ) {
                 Icon(
                     modifier = Modifier.align(Alignment.Center),
-                    imageVector = Icons.Rounded.MusicNote, contentDescription = "",
+                    imageVector = Icons.Rounded.MusicNote,
+                    contentDescription = null,
                 )
             }
         }

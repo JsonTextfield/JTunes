@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.menu
+package com.jsontextfield.jtunes.ui.components.menu
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row

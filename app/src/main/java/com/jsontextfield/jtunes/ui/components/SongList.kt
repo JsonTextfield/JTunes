@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui
+package com.jsontextfield.jtunes.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

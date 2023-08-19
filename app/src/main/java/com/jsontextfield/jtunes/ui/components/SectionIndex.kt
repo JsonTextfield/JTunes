@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui
+package com.jsontextfield.jtunes.ui.components
 
 import android.util.Log
 import android.view.MotionEvent
