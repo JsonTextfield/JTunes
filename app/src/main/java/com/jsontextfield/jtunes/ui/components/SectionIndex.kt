@@ -1,6 +1,5 @@
 package com.jsontextfield.jtunes.ui.components
 
-import android.util.Log
 import android.view.MotionEvent
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
@@ -17,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,71 +26,69 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jsontextfield.jtunes.entities.Song
+import com.jsontextfield.jtunes.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-private fun getIndexData(songs: List<Song>): ArrayList<Pair<String, Int>> {
-    val dataString = songs.sortedBy {
-        it.title.trim().toUpperCase(Locale.current)
-    }.map {
-        it.title.trim().toUpperCase(Locale.current).first()
-    }.joinToString("")
+private fun getIndexData(data: List<String>): LinkedHashMap<String, Int> {
+    val dataString = data.map {
+        it.toUpperCase(Locale.current).first()
+    }.sorted().joinToString("")
 
     val letters = Regex("[A-ZÀ-Ö]")
     val numbers = Regex("[0-9]")
     val special = Regex("[^0-9A-ZÀ-Ö]")
 
-    val result = LinkedHashSet<Pair<String, Int>>()
+    val result = LinkedHashMap<String, Int>()
 
-    if (special.containsMatchIn(dataString)) {
-        result.add(Pair("*", special.find(dataString)?.range?.first!!))
+    special.find(dataString)?.let {
+        result["*"] = it.range.first
     }
-    if (numbers.containsMatchIn(dataString)) {
-        result.add(Pair("#", numbers.find(dataString)?.range?.first!!))
+    numbers.find(dataString)?.let {
+        result["#"] = it.range.first
     }
-    for (character in dataString.split("")) {
-        if (letters.matches(character)) {
-            result.add(Pair(character, dataString.indexOf(character)))
+    for (letter in dataString.split("")) {
+        if (letters.matches(letter)) {
+            result[letter] = dataString.indexOf(letter)
         }
     }
-    Log.d("SectionIndex", dataString)
-    Log.d("SectionIndex", result.toString())
-    return ArrayList<Pair<String, Int>>(result)
+    return result
 }
 
 private fun getSelectedIndex(
     yPosition: Float,
     sectionIndexHeight: Float,
-    positions: ArrayList<Pair<String, Int>>,
+    positions: List<Pair<String, Int>>,
 ): Int {
-    val result = ((yPosition / sectionIndexHeight) * positions.size)
+    return ((yPosition / sectionIndexHeight) * positions.size)
         .toInt()
         .coerceIn(0, positions.size - 1)
-    val tag = "SectionIndex"
-    Log.e(tag, result.toString())
-    return result
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SectionIndex(cameras: List<Song>, listState: LazyListState, selectedColor: Color = Color.Cyan) {
-    val result = getIndexData(cameras)
+fun SectionIndex(
+    data: List<String>,
+    listState: LazyListState,
+    selectedColour: Color = colorResource(R.color.colourAccent),
+) {
+    val indexData = getIndexData(data).toList()
     var selectedKey by remember { mutableStateOf("") }
-    var offsetY by remember { mutableStateOf(0f) }
-    var columnHeightPx by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+    var columnHeightPx by remember { mutableFloatStateOf(0f) }
 
     val selectIndex = {
-        val listIndex = getSelectedIndex(offsetY, columnHeightPx, result)
-        if (selectedKey != result[listIndex].first) {
-            selectedKey = result[listIndex].first
-            val index = result[listIndex].second
+        val listIndex = getSelectedIndex(offsetY, columnHeightPx, indexData)
+        if (selectedKey != indexData[listIndex].first) {
+            selectedKey = indexData[listIndex].first
+            val index = indexData[listIndex].second
             CoroutineScope(Dispatchers.Main).launch {
                 listState.scrollToItem(index)
             }
@@ -136,7 +134,7 @@ fun SectionIndex(cameras: List<Song>, listState: LazyListState, selectedColor: C
                 true
             }
     ) {
-        result.map {
+        indexData.map {
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -149,7 +147,7 @@ fun SectionIndex(cameras: List<Song>, listState: LazyListState, selectedColor: C
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                     color = if (selectedKey == it.first) {
-                        selectedColor
+                        selectedColour
                     } else if (isSystemInDarkTheme()) {
                         Color.White
                     } else {

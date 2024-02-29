@@ -274,9 +274,9 @@ class MainActivity : ComponentActivity() {
                                     PageState.SONGS -> {
                                         Row {
                                             SectionIndex(
-                                                cameras = musicLibrary.songs,
+                                                data = musicLibrary.songs.map { song -> song.title },
                                                 listState = listState,
-                                                selectedColor = colorResource(R.color.colourAccent)
+                                                selectedColour = colorResource(R.color.colourAccent)
                                             )
                                             SongList(
                                                 songs = musicLibrary.songs,
