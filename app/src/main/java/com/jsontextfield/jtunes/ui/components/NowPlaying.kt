@@ -107,6 +107,7 @@ fun NowPlayingSmall(
                         song.title,
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 14.sp,
+                        lineHeight = 14.sp,
                         maxLines = 1,
                         modifier = Modifier.basicMarquee(),
                     )
@@ -114,7 +115,8 @@ fun NowPlayingSmall(
                         song.artist,
                         overflow = TextOverflow.Ellipsis,
                         color = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
+                        lineHeight = 12.sp,
                         maxLines = 1,
                         modifier = Modifier.basicMarquee(),
                     )
@@ -204,57 +206,26 @@ fun NowPlayingLarge(
                 },
             ) {
                 val configuration = LocalConfiguration.current
-                when (configuration.orientation) {
-                    Configuration.ORIENTATION_LANDSCAPE -> {
-                        Row(
-                            modifier = Modifier
-                                .padding(it)
-                                .padding(20.dp)
-                        ) {
-                            CoverArt(bitmap)
-                            Column {
-                                SongInfo(song)
-                                PlayerControls(
-                                    song,
-                                    position,
-                                    onSkipForward,
-                                    onSkipBackward,
-                                    onPlayPause,
-                                    onLoop,
-                                    onShuffle,
-                                    onSeek,
-                                    isLooping,
-                                    isShuffling,
-                                    isPlaying,
-                                )
-                            }
-                        }
-                    }
-
-                    else -> {
-                        Column(
-                            modifier = Modifier
-                                .padding(it)
-                                .padding(20.dp)
-                        ) {
-                            CoverArt(bitmap)
-                            Column {
-                                SongInfo(song)
-                                PlayerControls(
-                                    song,
-                                    position,
-                                    onSkipForward,
-                                    onSkipBackward,
-                                    onPlayPause,
-                                    onLoop,
-                                    onShuffle,
-                                    onSeek,
-                                    isLooping,
-                                    isShuffling,
-                                    isPlaying,
-                                )
-                            }
-                        }
+                PortLand(
+                    isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
+                    modifier = Modifier.padding(it).padding(10.dp),
+                ) {
+                    CoverArt(bitmap)
+                    Column {
+                        SongInfo(song)
+                        PlayerControls(
+                            song,
+                            position,
+                            onSkipForward,
+                            onSkipBackward,
+                            onPlayPause,
+                            onLoop,
+                            onShuffle,
+                            onSeek,
+                            isLooping,
+                            isShuffling,
+                            isPlaying,
+                        )
                     }
                 }
             }
