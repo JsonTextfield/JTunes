@@ -39,18 +39,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Song
 import java.io.FileNotFoundException
-
-@Preview
-@Composable
-fun SongListTilePreview() {
-    SongListTile(Song.random())
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

@@ -2,8 +2,6 @@ package com.jsontextfield.jtunes.entities
 
 import android.os.Parcel
 import android.os.Parcelable
-import java.util.UUID
-import kotlin.random.Random
 
 data class Song(
     var title: String = "",
@@ -53,17 +51,6 @@ data class Song(
 
         override fun newArray(size: Int): Array<Song?> {
             return arrayOfNulls(size)
-        }
-
-        fun random(): Song {
-            return Song(
-                title = "Song ${UUID.randomUUID()}",
-                artist = "Artist",
-                album = "Album",
-                duration = Random.nextLong(100, 200) * 1000,
-                date = Random.nextLong(100000, 200000000) * 1000,
-                trackNumber = Random.nextInt(1, 17),
-            )
         }
     }
 }
