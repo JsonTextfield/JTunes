@@ -1,22 +1,46 @@
 package com.jsontextfield.jtunes
 
-import android.media.MediaPlayer
-import android.util.Log
+import android.app.PendingIntent
+import android.content.Intent
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.jsontextfield.jtunes.entities.Song
-import java.io.FileNotFoundException
 
 
+@UnstableApi
 class MusicPlayerService : MediaSessionService() {
-    private val mediaPlayer = MediaPlayer()
     private var mediaSession: MediaSession? = null
-
     override fun onCreate() {
         super.onCreate()
         val player = ExoPlayer.Builder(this).build()
-        mediaSession = MediaSession.Builder(this, player).build()
+        val intent =
+            Intent(this, MainActivity::class.java).apply {
+                putExtra(
+                    "song",
+                    MusicLibrary.getInstance().queue[player.currentMediaItemIndex]
+                )
+            }
+        mediaSession = MediaSession.Builder(this, player)
+            .setSessionActivity(
+                PendingIntent.getActivity(
+                    this,
+                    1,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            )
+            .build()
+    }
+
+    // The user dismissed the app from the recent tasks
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val player = mediaSession?.player
+        if (player?.playWhenReady == true) {
+            // Make sure the service is not in foreground.
+            player.pause()
+        }
+        stopSelf()
     }
 
     override fun onDestroy() {
@@ -30,17 +54,5 @@ class MusicPlayerService : MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         return mediaSession
-    }
-
-    fun loadSong(song: Song) {
-        Log.w("NOW_PLAYING", song.title)
-        try {
-            mediaPlayer.reset()
-            mediaPlayer.setDataSource(song.path)
-            mediaPlayer.prepare()
-            mediaPlayer.start()
-        } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-        }
     }
 }
