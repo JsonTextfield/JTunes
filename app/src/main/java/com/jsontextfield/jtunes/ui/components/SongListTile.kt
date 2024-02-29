@@ -37,10 +37,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Song
 import java.io.FileNotFoundException
 
@@ -117,20 +119,22 @@ fun SongListTile(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     fontSize = 14.sp,
-                    color = if (selected) Color.Cyan else Color.Unspecified
+                    lineHeight = 14.sp,
+                    color = if (selected) colorResource(id = R.color.colourAccent) else Color.Unspecified
                 )
                 Text(
                     song.artist,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     color = if (selected) {
-                        Color.Cyan
+                        colorResource(id = R.color.colourAccent)
                     } else if (isSystemInDarkTheme()) {
                         Color.LightGray
                     } else {
                         Color.DarkGray
                     },
-                    fontSize = 10.sp
+                    fontSize = 12.sp,
+                    lineHeight = 12.sp,
                 )
             }
             IconButton(onClick = {}) {

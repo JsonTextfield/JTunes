@@ -51,7 +51,7 @@ fun GalleryTile(title: String, bitmap: Bitmap? = null, onClick: () -> Unit = {})
                 fontSize = 14.sp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .background(Color(0x44000000))
+                    .background(Color(0x99000000))
                     .fillMaxWidth()
                     .padding(5.dp)
             )
