@@ -3,6 +3,7 @@ package com.jsontextfield.jtunes
 import android.content.ComponentName
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -76,13 +77,17 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            musicViewModel.loadLibrary(this@MainActivity)
+            musicLibrary.load(this@MainActivity)
             val sessionToken =
                 SessionToken(this, ComponentName(this, MusicPlayerService::class.java))
             val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
             controllerFuture.addListener(
                 {
-                    mediaController = mediaController ?: controllerFuture.get()
+                    mediaController = controllerFuture.get()
+                    Log.e(
+                        "MEDIA_CONTROLLER",
+                        "Current index: ${mediaController?.currentMediaItemIndex}"
+                    )
                     mediaController?.addListener(object : Player.Listener {
 
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -91,14 +96,19 @@ class MainActivity : ComponentActivity() {
                         }
 
                         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                            mediaController?.let {
-                                musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
-                            }
                             super.onMediaItemTransition(mediaItem, reason)
+                            musicViewModel.onSongChanged(
+                                musicLibrary.queue[mediaController?.currentMediaItemIndex ?: 0]
+                            )
                         }
                     })
-                    mediaController?.shuffleModeEnabled = true
-                    loadQueue()
+                    if (mediaController?.mediaItemCount == 0) {
+                        loadQueue()
+                    }
+                    musicViewModel.onSongChanged(
+                        musicLibrary.queue[mediaController?.currentMediaItemIndex ?: 0]
+                    )
+                    musicViewModel.setPlaying(mediaController?.isPlaying == true)
                     musicViewModel.onUIStateChanged(UIState.LOADED)
                 },
                 MoreExecutors.directExecutor()
@@ -106,11 +116,6 @@ class MainActivity : ComponentActivity() {
         } else {
             musicViewModel.onUIStateChanged(UIState.ERROR)
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        requestPermissions()
     }
 
     private fun requestPermissions() {
@@ -126,14 +131,17 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 
+    override fun onStart() {
+        super.onStart()
+        requestPermissions()
+    }
+
     override fun onResume() {
         super.onResume()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (intent.getBooleanExtra("fromService", false)) {
             musicViewModel.onSongChanged(
-                intent.getParcelableExtra("song", Song::class.java) ?: Song()
+                musicLibrary.queue[intent.getIntExtra("song", 0)]
             )
-        } else {
-            musicViewModel.onSongChanged(intent.getParcelableExtra("song") ?: Song())
         }
         loadPage()
     }
@@ -194,22 +202,26 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+
                 PlayerButton.NEXT -> {
                     mediaController?.let {
                         it.seekToNextMediaItem()
                         musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
                     }
                 }
+
                 PlayerButton.PREVIOUS -> {
                     mediaController?.let {
                         it.seekToPrevious()
                         musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
                     }
                 }
+
                 PlayerButton.SHUFFLE -> {
                     isShuffling = !isShuffling
                     mediaController?.shuffleModeEnabled = isShuffling
                 }
+
                 PlayerButton.LOOP -> {
                     isLooping = !isLooping
                     mediaController?.repeatMode = if (isLooping) {
@@ -326,6 +338,8 @@ class MainActivity : ComponentActivity() {
                                 listState = listState,
                                 modifier = Modifier.weight(1f),
                                 onSongClicked = { song ->
+                                    musicLibrary.queue = ArrayList(musicLibrary.songs)
+                                    loadQueue()
                                     mediaController?.seekToDefaultPosition(
                                         musicLibrary.queue.indexOf(song)
                                     )
@@ -341,7 +355,7 @@ class MainActivity : ComponentActivity() {
                             albums = musicLibrary.albums,
                             onItemClick = { album ->
                                 musicLibrary.queue =
-                                    ArrayList<Song>(musicLibrary.songs
+                                    ArrayList(musicLibrary.songs
                                         .filter { song: Song ->
                                             song.album == album.title
                                         }.sortedBy { song: Song ->
@@ -349,6 +363,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     )
                                 loadQueue()
+                                mediaController?.play()
                                 musicViewModel.onSongChanged(musicLibrary.queue.first())
                             },
                         )
@@ -359,12 +374,13 @@ class MainActivity : ComponentActivity() {
                             artists = musicLibrary.artists,
                             onItemClick = { artist ->
                                 musicLibrary.queue =
-                                    ArrayList<Song>(musicLibrary.songs
+                                    ArrayList(musicLibrary.songs
                                         .filter { song: Song ->
                                             song.artist == artist.name
                                         }
                                     )
                                 loadQueue()
+                                mediaController?.play()
                                 musicViewModel.onSongChanged(musicLibrary.queue.first())
                             },
                         )
@@ -409,7 +425,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun loadQueue() {
-        mediaController?.clearMediaItems()
         mediaController?.setMediaItems(
             musicLibrary.queue.map { song ->
                 MediaItem.fromUri(song.path)

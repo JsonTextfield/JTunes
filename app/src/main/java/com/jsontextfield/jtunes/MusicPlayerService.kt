@@ -2,45 +2,52 @@ package com.jsontextfield.jtunes
 
 import android.app.PendingIntent
 import android.content.Intent
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
-
 @UnstableApi
 class MusicPlayerService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
+
     override fun onCreate() {
         super.onCreate()
         val player = ExoPlayer.Builder(this).build()
-        val intent =
-            Intent(this, MainActivity::class.java).apply {
-                putExtra(
-                    "song",
-                    MusicLibrary.getInstance().queue[player.currentMediaItemIndex]
-                )
+        mediaSession = MediaSession.Builder(this@MusicPlayerService, player).build()
+        setUpMediaSession()
+        player.addListener(object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
+                setUpMediaSession()
             }
-        mediaSession = MediaSession.Builder(this, player)
-            .setSessionActivity(
-                PendingIntent.getActivity(
-                    this,
-                    1,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
+        })
+    }
+
+    private fun setUpMediaSession() {
+        mediaSession?.setSessionActivity(
+            PendingIntent.getActivity(
+                this@MusicPlayerService,
+                1,
+                Intent(this@MusicPlayerService, MainActivity::class.java).apply {
+                    putExtra("song", mediaSession?.player?.currentMediaItemIndex)
+                    putExtra("fromService", true)
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            .build()
+        )
     }
 
     // The user dismissed the app from the recent tasks
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val player = mediaSession?.player
-        if (player?.playWhenReady == true) {
-            // Make sure the service is not in foreground.
-            player.pause()
+        val player = mediaSession?.player!!
+        if (!player.playWhenReady || player.mediaItemCount == 0) {
+            // Stop the service if not playing, continue playing in the background
+            // otherwise.
+            stopSelf()
         }
-        stopSelf()
     }
 
     override fun onDestroy() {
