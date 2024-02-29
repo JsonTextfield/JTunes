@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Error
@@ -51,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -59,6 +59,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.jsontextfield.jtunes.entities.Song
 import com.jsontextfield.jtunes.ui.components.AlbumList
 import com.jsontextfield.jtunes.ui.components.ArtistList
+import com.jsontextfield.jtunes.ui.components.GenreList
 import com.jsontextfield.jtunes.ui.components.NowPlayingLarge
 import com.jsontextfield.jtunes.ui.components.NowPlayingSmall
 import com.jsontextfield.jtunes.ui.components.SectionIndex
@@ -275,14 +276,14 @@ class MainActivity : ComponentActivity() {
                                         musicViewModel.onPageChanged(PageState.GENRES)
                                     },
                                 ),
-                                Action(
+                                /*Action(
                                     toolTip = stringResource(id = R.string.playlists),
                                     icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
                                     checked = pageState == PageState.PLAYLISTS,
                                     onClick = {
                                         musicViewModel.onPageChanged(PageState.PLAYLISTS)
                                     },
-                                ),
+                                ),*/
                             )
                             actions.map { action ->
                                 IconButton(
@@ -386,6 +387,23 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    PageState.GENRES -> {
+                        GenreList(
+                            genres = musicLibrary.genres,
+                            onItemClick = { genre ->
+                                musicLibrary.queue =
+                                    ArrayList(musicLibrary.songs
+                                        .filter { song: Song ->
+                                            song.genre == genre.name
+                                        }
+                                    )
+                                loadQueue()
+                                mediaController?.play()
+                                musicViewModel.onSongChanged(musicLibrary.queue.first())
+                            },
+                        )
+                    }
+
                     else -> {}
                 }
             }
@@ -427,9 +445,19 @@ class MainActivity : ComponentActivity() {
     private fun loadQueue() {
         mediaController?.setMediaItems(
             musicLibrary.queue.map { song ->
-                MediaItem.fromUri(song.path)
+                val metadata =
+                    MediaMetadata.Builder()
+                        .setTitle(song.title)
+                        .setArtist(song.artist)
+                        .build()
+
+                MediaItem.Builder()
+                    .setMediaMetadata(metadata)
+                    .setUri(song.path)
+                    .build()
             },
         )
+        mediaController?.prepare()
     }
 }
 

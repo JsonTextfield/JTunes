@@ -9,24 +9,24 @@ data class Song(
     var album: String = "",
     var id: Long = 0L,
     var path: String = "",
-    var genres: List<String> = ArrayList<String>(),
+    var genre: String = "",
     var duration: Long = 1L,
     var date: Long = 1000L,
     var dateAdded: Long = 1000L,
     var trackNumber: Int = 0,
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
-        title = parcel.readString()!!,
-        artist = parcel.readString()!!,
-        album = parcel.readString()!!,
+        title = parcel.readString() ?: "",
+        artist = parcel.readString() ?: "",
+        album = parcel.readString() ?: "",
         id = parcel.readLong(),
-        path = parcel.readString()!!,
+        path = parcel.readString() ?: "",
         duration = parcel.readLong(),
         date = parcel.readLong(),
         dateAdded = parcel.readLong(),
         trackNumber = parcel.readInt(),
-    ) {
-    }
+        genre = parcel.readString() ?: "",
+    )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(title)
@@ -38,6 +38,7 @@ data class Song(
         parcel.writeLong(date)
         parcel.writeLong(dateAdded)
         parcel.writeInt(trackNumber)
+        parcel.writeString(genre)
     }
 
     override fun describeContents(): Int {

@@ -44,8 +44,7 @@ class MusicPlayerService : MediaSessionService() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         val player = mediaSession?.player!!
         if (!player.playWhenReady || player.mediaItemCount == 0) {
-            // Stop the service if not playing, continue playing in the background
-            // otherwise.
+            // Stop the service if not playing, continue playing in the background otherwise.
             stopSelf()
         }
     }

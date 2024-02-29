@@ -15,7 +15,7 @@ class MusicLibrary private constructor() {
     val genres: ArrayList<Genre> = ArrayList<Genre>()
     val playedSongs = ArrayList<Song>()
 
-    fun loadAlbums(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadAlbums(context: Context, onComplete: () -> Unit = {}) {
         val projection = arrayOf(
             MediaStore.Audio.Albums.ALBUM,
             MediaStore.Audio.Albums.ARTIST,
@@ -46,7 +46,7 @@ class MusicLibrary private constructor() {
         onComplete()
     }
 
-    fun loadSongs(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadSongs(context: Context, onComplete: () -> Unit = {}) {
         val projection = arrayOf(
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
@@ -56,6 +56,7 @@ class MusicLibrary private constructor() {
             MediaStore.Audio.Media.YEAR,
             MediaStore.Audio.Media.TRACK,
             MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.GENRE,
         )
         val cursor = context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -85,6 +86,7 @@ class MusicLibrary private constructor() {
                         date = cursor.getLong(5),
                         trackNumber = trackNumber,
                         id = cursor.getLong(7),
+                        genre = cursor.getString(8) ?: "Other",
                     )
                 songs.add(song)
                 queue.add(song)
@@ -94,7 +96,7 @@ class MusicLibrary private constructor() {
         onComplete()
     }
 
-    fun loadArtists(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadArtists(context: Context, onComplete: () -> Unit = {}) {
         val projection = arrayOf(
             MediaStore.Audio.Artists.ARTIST,
             MediaStore.Audio.Artists._ID,
@@ -121,7 +123,7 @@ class MusicLibrary private constructor() {
         onComplete()
     }
 
-    fun loadGenres(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadGenres(context: Context, onComplete: () -> Unit = {}) {
         val projection = arrayOf(
             MediaStore.Audio.Genres.NAME,
             MediaStore.Audio.Genres._ID,
@@ -138,7 +140,7 @@ class MusicLibrary private constructor() {
             while (cursor.moveToNext()) {
                 genres.add(
                     Genre(
-                        name = cursor.getString(0),
+                        name = cursor.getString(0) ?: "Other",
                         id = cursor.getLong(1),
                     )
                 )
@@ -152,7 +154,7 @@ class MusicLibrary private constructor() {
         loadSongs(context)
         loadAlbums(context)
         loadArtists(context)
-        //loadGenres(context)
+        loadGenres(context)
     }
 
     companion object {
