@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -20,7 +21,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -72,32 +72,66 @@ fun PlayerControls(
                 .fillMaxWidth()
                 .padding(5.dp)
         )
-        Row(
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            IconButton(onClick = onShuffle) {
+        Row {
+            IconButton(
+                onClick = onShuffle,
+                modifier = Modifier
+                    .size(60.dp)
+                    .weight(1f)
+            ) {
                 Icon(
-                    if (isShuffling) Icons.Rounded.ShuffleOn else Icons.Rounded.Shuffle,
-                    null
+                    imageVector = if (isShuffling) Icons.Rounded.ShuffleOn else Icons.Rounded.Shuffle,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
                 )
             }
-            IconButton(onClick = onSkipBackward) {
-                Icon(Icons.Rounded.SkipPrevious, "")
+            IconButton(
+                onClick = onSkipBackward,
+                modifier = Modifier
+                    .size(60.dp)
+                    .weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.SkipPrevious,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                )
             }
 
-            IconButton(onClick = onPlayPause) {
+            IconButton(
+                onClick = onPlayPause,
+                modifier = Modifier
+                    .size(60.dp)
+                    .weight(1f)
+            ) {
                 Icon(
-                    if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    null
+                    imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
                 )
             }
-            IconButton(onClick = onSkipForward) {
-                Icon(Icons.Rounded.SkipNext, "")
-            }
-            IconButton(onClick = onLoop) {
+            IconButton(
+                onClick = onSkipForward,
+                modifier = Modifier
+                    .size(60.dp)
+                    .weight(1f)
+            ) {
                 Icon(
-                    if (isLooping) Icons.Rounded.RepeatOn else Icons.Rounded.Repeat,
-                    null
+                    Icons.Rounded.SkipNext,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                )
+            }
+            IconButton(
+                onClick = onLoop,
+                modifier = Modifier
+                    .size(60.dp)
+                    .weight(1f)
+            ) {
+                Icon(
+                    imageVector = if (isLooping) Icons.Rounded.RepeatOn else Icons.Rounded.Repeat,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
                 )
             }
         }
