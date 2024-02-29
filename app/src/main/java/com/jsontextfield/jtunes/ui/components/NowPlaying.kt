@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jsontextfield.jtunes.PlayerButton
 import com.jsontextfield.jtunes.entities.Song
 import java.io.FileNotFoundException
 
@@ -56,9 +57,7 @@ import java.io.FileNotFoundException
 fun NowPlayingSmall(
     song: Song,
     modifier: Modifier = Modifier,
-    onSkipForward: () -> Unit = {},
-    onSkipBackward: () -> Unit = {},
-    onPlayPause: () -> Unit = {},
+    onPlayerButtonPressed: (PlayerButton) -> Unit = {},
     onClick: () -> Unit = {},
     isPlaying: Boolean = false,
 ) {
@@ -123,22 +122,22 @@ fun NowPlayingSmall(
                 }
                 Row {
                     IconButton(
-                        onClick = onSkipBackward,
+                        onClick = { onPlayerButtonPressed(PlayerButton.PREVIOUS) },
                         modifier = Modifier.align(Alignment.CenterVertically)
                     ) {
-                        Icon(Icons.Rounded.SkipPrevious, "")
+                        Icon(Icons.Rounded.SkipPrevious, null)
                     }
                     IconButton(
-                        onClick = onPlayPause,
+                        onClick = { onPlayerButtonPressed(PlayerButton.PLAY_PAUSE) },
                         modifier = Modifier.align(Alignment.CenterVertically)
                     ) {
-                        Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, "")
+                        Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null)
                     }
                     IconButton(
-                        onClick = onSkipForward,
+                        onClick = { onPlayerButtonPressed(PlayerButton.NEXT) },
                         modifier = Modifier.align(Alignment.CenterVertically)
                     ) {
-                        Icon(Icons.Rounded.SkipNext, "")
+                        Icon(Icons.Rounded.SkipNext, null)
                     }
                 }
             }
@@ -152,11 +151,7 @@ fun NowPlayingLarge(
     song: Song,
     position: Float = 0f,
     onBackPressed: () -> Unit = {},
-    onSkipForward: () -> Unit = {},
-    onSkipBackward: () -> Unit = {},
-    onPlayPause: () -> Unit = {},
-    onLoop: () -> Unit = {},
-    onShuffle: () -> Unit = {},
+    onPlayerButtonPressed: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
     isLooping: Boolean = false,
     isShuffling: Boolean = true,
@@ -208,7 +203,9 @@ fun NowPlayingLarge(
                 val configuration = LocalConfiguration.current
                 PortLand(
                     isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
-                    modifier = Modifier.padding(it).padding(10.dp),
+                    modifier = Modifier
+                        .padding(it)
+                        .padding(10.dp),
                 ) {
                     CoverArt(bitmap)
                     Column {
@@ -216,11 +213,7 @@ fun NowPlayingLarge(
                         PlayerControls(
                             song,
                             position,
-                            onSkipForward,
-                            onSkipBackward,
-                            onPlayPause,
-                            onLoop,
-                            onShuffle,
+                            onPlayerButtonPressed,
                             onSeek,
                             isLooping,
                             isShuffling,

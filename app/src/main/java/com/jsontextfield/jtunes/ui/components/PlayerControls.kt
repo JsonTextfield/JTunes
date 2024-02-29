@@ -26,17 +26,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jsontextfield.jtunes.PlayerButton
 import com.jsontextfield.jtunes.entities.Song
 
 @Composable
 fun PlayerControls(
     song: Song,
     position: Float = 0f,
-    onSkipForward: () -> Unit = {},
-    onSkipBackward: () -> Unit = {},
-    onPlayPause: () -> Unit = {},
-    onLoop: () -> Unit = {},
-    onShuffle: () -> Unit = {},
+    onPlayerButtonPressed: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
     isLooping: Boolean = false,
     isShuffling: Boolean = true,
@@ -74,7 +71,7 @@ fun PlayerControls(
         )
         Row {
             IconButton(
-                onClick = onShuffle,
+                onClick = { onPlayerButtonPressed(PlayerButton.SHUFFLE) },
                 modifier = Modifier
                     .size(60.dp)
                     .weight(1f)
@@ -86,7 +83,7 @@ fun PlayerControls(
                 )
             }
             IconButton(
-                onClick = onSkipBackward,
+                onClick = { onPlayerButtonPressed(PlayerButton.PREVIOUS) },
                 modifier = Modifier
                     .size(60.dp)
                     .weight(1f)
@@ -99,7 +96,7 @@ fun PlayerControls(
             }
 
             IconButton(
-                onClick = onPlayPause,
+                onClick = { onPlayerButtonPressed(PlayerButton.PLAY_PAUSE) },
                 modifier = Modifier
                     .size(60.dp)
                     .weight(1f)
@@ -111,7 +108,7 @@ fun PlayerControls(
                 )
             }
             IconButton(
-                onClick = onSkipForward,
+                onClick = { onPlayerButtonPressed(PlayerButton.NEXT) },
                 modifier = Modifier
                     .size(60.dp)
                     .weight(1f)
@@ -123,7 +120,7 @@ fun PlayerControls(
                 )
             }
             IconButton(
-                onClick = onLoop,
+                onClick = { onPlayerButtonPressed(PlayerButton.LOOP) },
                 modifier = Modifier
                     .size(60.dp)
                     .weight(1f)
