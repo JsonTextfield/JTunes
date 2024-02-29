@@ -9,6 +9,7 @@ import com.jsontextfield.jtunes.entities.Song
 
 class MusicLibrary private constructor() {
     val songs: ArrayList<Song> = ArrayList<Song>()
+    var queue: ArrayList<Song> = ArrayList<Song>()
     val albums: ArrayList<Album> = ArrayList<Album>()
     val artists: ArrayList<Artist> = ArrayList<Artist>()
     val genres: ArrayList<Genre> = ArrayList<Genre>()
@@ -18,7 +19,6 @@ class MusicLibrary private constructor() {
         val projection = arrayOf(
             MediaStore.Audio.Albums.ALBUM,
             MediaStore.Audio.Albums.ARTIST,
-            MediaStore.Audio.Albums.ALBUM_ART,
             MediaStore.Audio.Albums.FIRST_YEAR,
             MediaStore.Audio.Albums._ID,
         )
@@ -29,21 +29,21 @@ class MusicLibrary private constructor() {
             null,
             "LOWER(" + MediaStore.Audio.Albums.ALBUM + ") ASC"
         )
+        albums.clear()
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 albums.add(
                     Album(
                         title = cursor.getString(0),
                         artist = cursor.getString(1),
-                        coverArt = cursor.getString(2) ?: "",
-                        date = cursor.getInt(3).toLong(),
-                        id = cursor.getLong(4)
+                        date = cursor.getLong(2),
+                        id = cursor.getLong(3)
                     )
                 )
             }
             cursor.close()
         }
-        onComplete.invoke()
+        onComplete()
     }
 
     fun loadSongs(context: Context, onComplete: () -> Unit = {}) {
@@ -65,6 +65,8 @@ class MusicLibrary private constructor() {
             "LOWER(" + MediaStore.Audio.Media.TITLE + ") ASC"
         )
         if (cursor != null) {
+            songs.clear()
+            queue.clear()
             while (cursor.moveToNext()) {
                 val trackString = cursor.getString(6) ?: ""
                 var trackNumber = 0
@@ -73,22 +75,23 @@ class MusicLibrary private constructor() {
                 } else if (trackString.isNotEmpty()) {
                     trackNumber = trackString.toInt()
                 }
-                songs.add(
+                val song =
                     Song(
                         title = cursor.getString(0),
                         artist = cursor.getString(1),
                         path = cursor.getString(3),
                         album = cursor.getString(2),
-                        duration = cursor.getInt(4).toLong(),
+                        duration = cursor.getLong(4),
                         date = cursor.getLong(5),
                         trackNumber = trackNumber,
                         id = cursor.getLong(7),
                     )
-                )
+                songs.add(song)
+                queue.add(song)
             }
             cursor.close()
         }
-        onComplete.invoke()
+        onComplete()
     }
 
     fun loadArtists(context: Context, onComplete: () -> Unit = {}) {
@@ -103,6 +106,7 @@ class MusicLibrary private constructor() {
             null,
             "LOWER(" + MediaStore.Audio.Artists.ARTIST + ") ASC"
         )
+        artists.clear()
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 artists.add(
@@ -114,8 +118,9 @@ class MusicLibrary private constructor() {
             }
             cursor.close()
         }
-        onComplete.invoke()
+        onComplete()
     }
+
     fun loadGenres(context: Context, onComplete: () -> Unit = {}) {
         val projection = arrayOf(
             MediaStore.Audio.Genres.NAME,
@@ -128,6 +133,7 @@ class MusicLibrary private constructor() {
             null,
             "LOWER(" + MediaStore.Audio.Genres.NAME + ") ASC"
         )
+        genres.clear()
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 genres.add(
@@ -139,7 +145,7 @@ class MusicLibrary private constructor() {
             }
             cursor.close()
         }
-        onComplete.invoke()
+        onComplete()
     }
 
     fun load(context: Context, onComplete: () -> Unit = {}) {
