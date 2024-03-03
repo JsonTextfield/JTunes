@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Size
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Genre
 import java.io.FileNotFoundException
 
@@ -26,30 +29,37 @@ fun GenreList(
     listState: LazyListState = rememberLazyListState(),
     onItemClick: (genre: Genre) -> Unit = {},
 ) {
-    val context = LocalContext.current
-    LazyColumn(
-        state = listState,
-        modifier = modifier,
-    ) {
-        items(genres, { genre -> genre.hashCode() }) { genre ->
-            var bitmap: Bitmap? by remember { mutableStateOf(null) }
-            LaunchedEffect(genre) {
-                bitmap = try {
-                    val trackUri = ContentUris.withAppendedId(
-                        MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
-                        genre.id
-                    )
-                    context.contentResolver.loadThumbnail(
-                        trackUri,
-                        Size(512, 512),
+    Row {
+        val context = LocalContext.current
+        SectionIndex(
+            data = genres.map { genre -> genre.name },
+            listState = listState,
+            selectedColour = colorResource(R.color.colourAccent),
+        )
+        LazyColumn(
+            state = listState,
+            modifier = modifier,
+        ) {
+            items(genres, { genre -> genre.hashCode() }) { genre ->
+                var bitmap: Bitmap? by remember { mutableStateOf(null) }
+                LaunchedEffect(genre) {
+                    bitmap = try {
+                        val trackUri = ContentUris.withAppendedId(
+                            MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
+                            genre.id
+                        )
+                        context.contentResolver.loadThumbnail(
+                            trackUri,
+                            Size(512, 512),
+                            null
+                        )
+                    } catch (e: FileNotFoundException) {
                         null
-                    )
-                } catch (e: FileNotFoundException) {
-                    null
+                    }
                 }
-            }
-            GenreListTile(genre = genre) {
-                onItemClick(genre)
+                GenreListTile(genre = genre) {
+                    onItemClick(genre)
+                }
             }
         }
     }

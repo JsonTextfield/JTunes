@@ -1,5 +1,6 @@
 package com.jsontextfield.jtunes.ui.components
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,8 +10,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Song
 
 @Composable
@@ -21,23 +24,30 @@ fun SongList(
     listState: LazyListState = rememberLazyListState(),
     onSongClicked: (song: Song) -> Unit = {},
 ) {
-    LazyColumn(
-        state = listState,
-        modifier = modifier,
-    ) {
-        items(songs, { it.hashCode() }) {
-            SongListTile(song = it, selected = selectedSong == it) {
-                onSongClicked(it)
+    Row {
+        SectionIndex(
+            data = songs.map { song -> song.title },
+            listState = listState,
+            selectedColour = colorResource(R.color.colourAccent)
+        )
+        LazyColumn(
+            state = listState,
+            modifier = modifier,
+        ) {
+            items(songs, { it.hashCode() }) {
+                SongListTile(song = it, selected = selectedSong == it) {
+                    onSongClicked(it)
+                }
             }
-        }
-        item {
-            Text(
-                "${songs.size} songs",
-                modifier = Modifier
-                    .padding(10.dp)
-                    .fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+            item {
+                Text(
+                    "${songs.size} songs",
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
