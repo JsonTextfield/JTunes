@@ -11,6 +11,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOn
+import androidx.compose.material.icons.rounded.RepeatOneOn
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.ShuffleOn
 import androidx.compose.material.icons.rounded.SkipNext
@@ -26,16 +27,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jsontextfield.jtunes.PlayerButton
-import com.jsontextfield.jtunes.entities.Song
+import androidx.media3.common.Player
+
+enum class PlayerButton { PLAY_PAUSE, NEXT, PREVIOUS, SHUFFLE, LOOP, }
 
 @Composable
 fun PlayerControls(
-    song: Song,
+    songDuration: Long = 0L,
     position: Float = 0f,
     onPlayerButtonPressed: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
-    isLooping: Boolean = false,
+    loopMode: Int = Player.REPEAT_MODE_OFF,
     isShuffling: Boolean = true,
     isPlaying: Boolean = true,
 ) {
@@ -44,15 +46,15 @@ fun PlayerControls(
             modifier = Modifier.padding(horizontal = 20.dp),
             value = position,
             onValueChange = onSeek,
-            valueRange = 0f..song.duration.toFloat(),
+            valueRange = 0f..songDuration.toFloat(),
             colors = SliderDefaults.colors(
                 thumbColor = if (isSystemInDarkTheme()) Color.White else Color.DarkGray,
                 activeTrackColor = if (isSystemInDarkTheme()) Color.White else Color.DarkGray,
                 inactiveTrackColor = if (isSystemInDarkTheme()) Color.Gray else Color.LightGray,
             )
         )
-        val durationMinutes = (song.duration / 1000 / 60).toInt()
-        val durationSeconds = (song.duration / 1000 % 60).toInt()
+        val durationMinutes = (songDuration / 1000 / 60).toInt()
+        val durationSeconds = (songDuration / 1000 % 60).toInt()
         val timeMinutes = (position / 1000 / 60).toInt()
         val timeSeconds = (position / 1000 % 60).toInt()
         Text(
@@ -126,7 +128,11 @@ fun PlayerControls(
                     .weight(1f)
             ) {
                 Icon(
-                    imageVector = if (isLooping) Icons.Rounded.RepeatOn else Icons.Rounded.Repeat,
+                    imageVector = when (loopMode) {
+                        Player.REPEAT_MODE_ALL -> Icons.Rounded.RepeatOn
+                        Player.REPEAT_MODE_ONE -> Icons.Rounded.RepeatOneOn
+                        else -> Icons.Rounded.Repeat
+                    },
                     contentDescription = null,
                     modifier = Modifier.size(40.dp),
                 )

@@ -1,7 +1,7 @@
 package com.jsontextfield.jtunes
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.media3.common.Player
 import com.jsontextfield.jtunes.entities.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,9 +19,33 @@ class MusicViewModel : ViewModel() {
     val isPlaying: StateFlow<Boolean>
         get() = _isPlaying
 
+    private val _isShuffling = MutableStateFlow(false)
+    val isShuffling: StateFlow<Boolean>
+        get() = _isShuffling
+
+    private val _loopMode = MutableStateFlow(Player.REPEAT_MODE_OFF)
+    val loopMode: StateFlow<Int>
+        get() = _loopMode
+
     private val _selectedSong = MutableStateFlow(Song())
     val selectedSong: StateFlow<Song>
         get() = _selectedSong
+
+    private val _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String>
+        get() = _searchText
+
+    fun setShuffling(value: Boolean) {
+        _isShuffling.value = value
+    }
+
+    fun onLoopModeChanged(mode: Int) {
+        _loopMode.value = mode
+    }
+
+    fun onSearchTextChanged(text: String) {
+        _searchText.value = text
+    }
 
     fun onPageChanged(state: PageState) {
         _pageState.value = state
@@ -38,12 +62,7 @@ class MusicViewModel : ViewModel() {
     fun onUIStateChanged(newUIState: UIState) {
         _uiState.value = newUIState
     }
-
-    fun loadLibrary(context: Context) {
-        MusicLibrary.getInstance().load(context)
-    }
 }
 
 enum class UIState { LOADING, LOADED, ERROR, }
-enum class LoopMode { OFF, LOOP_ALL, LOOP_ONE, }
 enum class PageState { SONGS, ALBUMS, ARTISTS, GENRES, PLAYLISTS, }

@@ -34,6 +34,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,11 +47,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jsontextfield.jtunes.PlayerButton
+import androidx.media3.common.Player
 import com.jsontextfield.jtunes.entities.Song
+import kotlinx.coroutines.delay
 import java.io.FileNotFoundException
+import kotlin.math.cos
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -153,7 +157,7 @@ fun NowPlayingLarge(
     onBackPressed: () -> Unit = {},
     onPlayerButtonPressed: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
-    isLooping: Boolean = false,
+    loopMode: Int = Player.REPEAT_MODE_OFF,
     isShuffling: Boolean = true,
     isPlaying: Boolean = true,
 ) {
@@ -173,6 +177,15 @@ fun NowPlayingLarge(
                 }
             }
             if (bitmap != null) {
+                var blur by remember { mutableFloatStateOf(20f) }
+                LaunchedEffect(isPlaying) {
+                    var i = 0f
+                    while (isPlaying) {
+                        blur = 15 + 10 * cos(i)
+                        i += 0.01f
+                        delay(16)
+                    }
+                }
                 Image(
                     bitmap = bitmap!!.asImageBitmap(),
                     contentDescription = null,
@@ -180,7 +193,7 @@ fun NowPlayingLarge(
                     alpha = .4f,
                     modifier = Modifier
                         .fillMaxSize()
-                        .blur(50.dp)
+                        .blur(Dp(blur))
                 )
             }
             Scaffold(
@@ -205,17 +218,17 @@ fun NowPlayingLarge(
                     isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
                     modifier = Modifier
                         .padding(it)
-                        .padding(10.dp),
+                        .padding(30.dp),
                 ) {
                     CoverArt(bitmap)
                     Column {
                         SongInfo(song)
                         PlayerControls(
-                            song,
+                            song.duration,
                             position,
                             onPlayerButtonPressed,
                             onSeek,
-                            isLooping,
+                            loopMode,
                             isShuffling,
                             isPlaying,
                         )
