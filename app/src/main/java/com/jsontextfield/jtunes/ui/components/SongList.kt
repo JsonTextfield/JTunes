@@ -21,7 +21,10 @@ fun SongList(
     listState: LazyListState = rememberLazyListState(),
     onSongClicked: (song: Song) -> Unit = {},
 ) {
-    LazyColumn(state = listState, modifier = modifier) {
+    LazyColumn(
+        state = listState,
+        modifier = modifier,
+    ) {
         items(songs, { it.hashCode() }) {
             SongListTile(song = it, selected = selectedSong == it) {
                 onSongClicked(it)
