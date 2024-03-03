@@ -337,7 +337,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(5.dp),
-                                hintText = "Search songs",
+                                hintText = "Search from ${musicLibrary.songs.size} songs",
                                 onTextChanged = { text ->
                                     musicViewModel.onSearchTextChanged(text)
                                 }
@@ -373,7 +373,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(5.dp),
-                                hintText = "Search albums",
+                                hintText = "Search from ${musicLibrary.albums.size} albums",
                                 onTextChanged = { text ->
                                     musicViewModel.onSearchTextChanged(text)
                                 }
@@ -409,7 +409,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(5.dp),
-                                hintText = "Search artists",
+                                hintText = "Search from ${musicLibrary.artists.size} artists",
                                 onTextChanged = { text ->
                                     musicViewModel.onSearchTextChanged(text)
                                 }
@@ -445,7 +445,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(5.dp),
-                                hintText = "Search genres",
+                                hintText = "Search from ${musicLibrary.genres.size} genres",
                                 onTextChanged = { text ->
                                     musicViewModel.onSearchTextChanged(text)
                                 }
