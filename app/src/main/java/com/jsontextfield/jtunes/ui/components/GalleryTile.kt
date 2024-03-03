@@ -33,7 +33,7 @@ fun GalleryTilePreview() {
 fun GalleryTile(title: String, bitmap: Bitmap? = null, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(20.dp))
             .aspectRatio(1f)
     ) {
 

@@ -11,39 +11,44 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
+import com.jsontextfield.jtunes.R
 
 @Composable
 fun JTunesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val colorScheme = if (isSystemInDarkTheme()) {
+        darkColorScheme(
+            primary = colorResource(id = R.color.colourAccent),
+            secondary = colorResource(id = R.color.colourAccent),
+            tertiary = colorResource(id = R.color.colourAccent),
+            // Other default colors to override
+            //onSurface = colorResource(id = R.color.colourAccent),
+            //background = colorResource(id = R.color.colourAccent),
+            //surface = colorResource(id = R.color.colourAccent),
+            //onPrimary = colorResource(id = R.color.colourAccent),
+            //onSecondary = colorResource(id = R.color.colourAccent),
+            //onTertiary = colorResource(id = R.color.colourAccent),
+            //onBackground = colorResource(id = R.color.colourAccent),
+        )
+    } else {
+        lightColorScheme(
+            primary = colorResource(id = R.color.colourAccent),
+            secondary = colorResource(id = R.color.colourAccent),
+            tertiary = colorResource(id = R.color.colourAccent),
+            // Other default colors to override
+            //onSurface = colorResource(id = R.color.colourAccent),
+            //background = colorResource(id = R.color.colourAccent),
+            //surface = colorResource(id = R.color.colourAccent),
+            //onPrimary = colorResource(id = R.color.colourAccent),
+            //onSecondary = colorResource(id = R.color.colourAccent),
+            //onTertiary = colorResource(id = R.color.colourAccent),
+            //onBackground = colorResource(id = R.color.colourAccent),
+        )
     }
 
     val colors = if (!darkTheme) lightColorScheme() else darkColorScheme()
@@ -58,7 +63,7 @@ fun JTunesTheme(
     }
 
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = colorScheme,
         typography = Typography,
         content = content,
         shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(10.dp))

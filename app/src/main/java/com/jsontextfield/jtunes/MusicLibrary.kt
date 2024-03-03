@@ -147,6 +147,7 @@ class MusicLibrary private constructor() {
             }
             cursor.close()
         }
+        genres.sortBy { it.name }
         onComplete()
     }
 
