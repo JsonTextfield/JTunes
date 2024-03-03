@@ -26,10 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jsontextfield.jtunes.R
@@ -78,8 +80,9 @@ fun SectionIndex(
     data: List<String>,
     listState: LazyListState,
     selectedColour: Color = colorResource(R.color.colourAccent),
+    minSectionHeight: Dp = 20.dp, // Minimum pixels needed to display each section
 ) {
-    val indexData = getIndexData(data).toList()
+    var indexData = getIndexData(data).toList()
     var selectedKey by remember { mutableStateOf("") }
     var offsetY by remember { mutableFloatStateOf(0f) }
     var columnHeightPx by remember { mutableFloatStateOf(0f) }
@@ -134,26 +137,32 @@ fun SectionIndex(
                 true
             }
     ) {
-        indexData.map {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)
-            ) {
-                Text(
-                    text = it.first,
-                    fontSize = 10.sp,
-                    modifier = Modifier.align(Alignment.Center),
-                    textAlign = TextAlign.Center,
-                    color = if (selectedKey == it.first) {
-                        selectedColour
-                    } else if (isSystemInDarkTheme()) {
-                        Color.White
-                    } else {
-                        Color.Black
-                    }
-                )
+        with(LocalDensity.current) {
+            val minSectionHeighPx = minSectionHeight.toPx()
+            val sectionsToShow = (columnHeightPx / minSectionHeighPx).toInt().coerceAtLeast(1)
+            val skip = (indexData.size / sectionsToShow).coerceAtLeast(1)
+            indexData = indexData.filterIndexed { index, _ -> index % skip == 0 }
+            indexData.map {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp)
+                ) {
+                    Text(
+                        text = it.first,
+                        fontSize = 10.sp,
+                        modifier = Modifier.align(Alignment.Center),
+                        textAlign = TextAlign.Center,
+                        color = if (selectedKey == it.first) {
+                            selectedColour
+                        } else if (isSystemInDarkTheme()) {
+                            Color.White
+                        } else {
+                            Color.Black
+                        }
+                    )
+                }
             }
         }
     }
