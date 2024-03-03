@@ -14,6 +14,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,7 +26,6 @@ import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -62,6 +62,7 @@ import com.jsontextfield.jtunes.ui.components.ArtistList
 import com.jsontextfield.jtunes.ui.components.GenreList
 import com.jsontextfield.jtunes.ui.components.NowPlayingLarge
 import com.jsontextfield.jtunes.ui.components.NowPlayingSmall
+import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.components.SectionIndex
 import com.jsontextfield.jtunes.ui.components.SongList
 import com.jsontextfield.jtunes.ui.components.menu.Action
@@ -241,10 +242,6 @@ class MainActivity : ComponentActivity() {
                         actions = {
                             val actions: List<Action> = listOf(
                                 Action(
-                                    toolTip = stringResource(id = R.string.search),
-                                    icon = Icons.Rounded.Search,
-                                ),
-                                Action(
                                     toolTip = stringResource(id = R.string.songs),
                                     icon = Icons.Rounded.MusicNote,
                                     checked = pageState == PageState.SONGS,
@@ -324,84 +321,163 @@ class MainActivity : ComponentActivity() {
                     .padding(it),
                 color = MaterialTheme.colorScheme.background
             ) {
+                val searchText by musicViewModel.searchText.collectAsState()
                 when (pageState) {
                     PageState.SONGS -> {
-                        Row {
-                            val listState = rememberLazyListState()
-                            SectionIndex(
-                                data = musicLibrary.songs.map { song -> song.title },
-                                listState = listState,
-                                selectedColour = colorResource(R.color.colourAccent)
+                        Column {
+                            SearchBar(
+                                value = searchText,
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                hintText = "Search songs",
+                                onTextChanged = { text ->
+                                    musicViewModel.onSearchTextChanged(text)
+                                }
                             )
-                            SongList(
-                                songs = musicLibrary.songs,
-                                selectedSong = selectedSong,
-                                listState = listState,
-                                modifier = Modifier.weight(1f),
-                                onSongClicked = { song ->
-                                    musicLibrary.queue = ArrayList(musicLibrary.songs)
-                                    loadQueue()
-                                    mediaController?.seekToDefaultPosition(
-                                        musicLibrary.queue.indexOf(song)
+                            Row {
+                                val listState = rememberLazyListState()
+                                SectionIndex(
+                                    data = musicLibrary.songs.map { song -> song.title },
+                                    listState = listState,
+                                    selectedColour = colorResource(R.color.colourAccent)
+                                )
+                                SongList(
+                                    songs = musicLibrary.songs.filter { song ->
+                                        song.title.contains(
+                                            searchText,
+                                            true
+                                        )
+                                    },
+                                    selectedSong = selectedSong,
+                                    listState = listState,
+                                    modifier = Modifier.weight(1f),
+                                    onSongClicked = { song ->
+                                        musicLibrary.queue = ArrayList(musicLibrary.songs)
+                                        loadQueue()
+                                        mediaController?.seekToDefaultPosition(
+                                            musicLibrary.queue.indexOf(song)
+                                        )
+                                        mediaController?.play()
+                                        musicViewModel.onSongChanged(song)
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    PageState.ALBUMS -> {
+                        Column {
+                            SearchBar(
+                                value = searchText,
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                hintText = "Search albums",
+                                onTextChanged = { text ->
+                                    musicViewModel.onSearchTextChanged(text)
+                                }
+                            )
+                            AlbumList(
+                                albums = musicLibrary.albums.filter { album ->
+                                    album.title.contains(
+                                        searchText,
+                                        true
                                     )
+                                },
+                                onItemClick = { album ->
+                                    musicLibrary.queue =
+                                        ArrayList(musicLibrary.songs
+                                            .filter { song: Song ->
+                                                song.album == album.title
+                                            }.sortedBy { song: Song ->
+                                                song.trackNumber
+                                            }
+                                        )
+                                    loadQueue()
                                     mediaController?.play()
-                                    musicViewModel.onSongChanged(song)
+                                    musicViewModel.onSongChanged(musicLibrary.queue.first())
                                 },
                             )
                         }
                     }
 
-                    PageState.ALBUMS -> {
-                        AlbumList(
-                            albums = musicLibrary.albums,
-                            onItemClick = { album ->
-                                musicLibrary.queue =
-                                    ArrayList(musicLibrary.songs
-                                        .filter { song: Song ->
-                                            song.album == album.title
-                                        }.sortedBy { song: Song ->
-                                            song.trackNumber
-                                        }
-                                    )
-                                loadQueue()
-                                mediaController?.play()
-                                musicViewModel.onSongChanged(musicLibrary.queue.first())
-                            },
-                        )
-                    }
-
                     PageState.ARTISTS -> {
-                        ArtistList(
-                            artists = musicLibrary.artists,
-                            onItemClick = { artist ->
-                                musicLibrary.queue =
-                                    ArrayList(musicLibrary.songs
-                                        .filter { song: Song ->
-                                            song.artist == artist.name
-                                        }
-                                    )
-                                loadQueue()
-                                mediaController?.play()
-                                musicViewModel.onSongChanged(musicLibrary.queue.first())
-                            },
-                        )
+                        Column {
+                            SearchBar(
+                                value = searchText,
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                hintText = "Search artists",
+                                onTextChanged = { text ->
+                                    musicViewModel.onSearchTextChanged(text)
+                                }
+                            )
+                            Row {
+                                val listState = rememberLazyListState()
+                                SectionIndex(
+                                    data = musicLibrary.artists.map { artist -> artist.name },
+                                    listState = listState,
+                                    selectedColour = colorResource(R.color.colourAccent)
+                                )
+                                ArtistList(
+                                    listState = listState,
+                                    artists = musicLibrary.artists.filter { artist ->
+                                        artist.name.contains(
+                                            searchText,
+                                            true
+                                        )
+                                    },
+                                    onItemClick = { artist ->
+                                        musicLibrary.queue =
+                                            ArrayList(musicLibrary.songs
+                                                .filter { song: Song ->
+                                                    song.artist == artist.name
+                                                }
+                                            )
+                                        loadQueue()
+                                        mediaController?.play()
+                                        musicViewModel.onSongChanged(musicLibrary.queue.first())
+                                    },
+                                )
+                            }
+                        }
                     }
 
                     PageState.GENRES -> {
-                        GenreList(
-                            genres = musicLibrary.genres,
-                            onItemClick = { genre ->
-                                musicLibrary.queue =
-                                    ArrayList(musicLibrary.songs
-                                        .filter { song: Song ->
-                                            song.genre == genre.name
-                                        }
-                                    )
-                                loadQueue()
-                                mediaController?.play()
-                                musicViewModel.onSongChanged(musicLibrary.queue.first())
-                            },
-                        )
+                        Column {
+                            SearchBar(
+                                value = searchText,
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                hintText = "Search genres",
+                                onTextChanged = { text ->
+                                    musicViewModel.onSearchTextChanged(text)
+                                }
+                            )
+                            Row {
+                                val listState = rememberLazyListState()
+                                SectionIndex(
+                                    data = musicLibrary.genres.map { genre -> genre.name },
+                                    listState = listState,
+                                    selectedColour = colorResource(R.color.colourAccent),
+                                )
+                                GenreList(
+                                    listState = listState,
+                                    genres = musicLibrary.genres.filter { genre ->
+                                        genre.name.contains(
+                                            searchText,
+                                            true
+                                        )
+                                    },
+                                    onItemClick = { genre ->
+                                        musicLibrary.queue =
+                                            ArrayList(musicLibrary.songs
+                                                .filter { song: Song ->
+                                                    song.genre == genre.name
+                                                }
+                                            )
+                                        loadQueue()
+                                        mediaController?.play()
+                                        musicViewModel.onSongChanged(musicLibrary.queue.first())
+                                    },
+                                )
+                            }
+                        }
                     }
 
                     else -> {}
