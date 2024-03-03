@@ -8,14 +8,13 @@ import com.jsontextfield.jtunes.entities.Genre
 import com.jsontextfield.jtunes.entities.Song
 
 class MusicLibrary private constructor() {
-    val songs: ArrayList<Song> = ArrayList<Song>()
-    var queue: ArrayList<Song> = ArrayList<Song>()
-    val albums: ArrayList<Album> = ArrayList<Album>()
-    val artists: ArrayList<Artist> = ArrayList<Artist>()
-    val genres: ArrayList<Genre> = ArrayList<Genre>()
-    val playedSongs = ArrayList<Song>()
+    val songs = ArrayList<Song>()
+    var queue = ArrayList<Song>()
+    val albums = ArrayList<Album>()
+    val artists = ArrayList<Artist>()
+    val genres = ArrayList<Genre>()
 
-    private fun loadAlbums(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadAlbums(context: Context) {
         val projection = arrayOf(
             MediaStore.Audio.Albums.ALBUM,
             MediaStore.Audio.Albums.ARTIST,
@@ -43,10 +42,9 @@ class MusicLibrary private constructor() {
             }
             cursor.close()
         }
-        onComplete()
     }
 
-    private fun loadSongs(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadSongs(context: Context) {
         val projection = arrayOf(
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
@@ -93,10 +91,9 @@ class MusicLibrary private constructor() {
             }
             cursor.close()
         }
-        onComplete()
     }
 
-    private fun loadArtists(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadArtists(context: Context) {
         val projection = arrayOf(
             MediaStore.Audio.Artists.ARTIST,
             MediaStore.Audio.Artists._ID,
@@ -120,10 +117,9 @@ class MusicLibrary private constructor() {
             }
             cursor.close()
         }
-        onComplete()
     }
 
-    private fun loadGenres(context: Context, onComplete: () -> Unit = {}) {
+    private fun loadGenres(context: Context) {
         val projection = arrayOf(
             MediaStore.Audio.Genres.NAME,
             MediaStore.Audio.Genres._ID,
@@ -148,10 +144,9 @@ class MusicLibrary private constructor() {
             cursor.close()
         }
         genres.sortBy { it.name }
-        onComplete()
     }
 
-    fun load(context: Context, onComplete: () -> Unit = {}) {
+    fun load(context: Context) {
         loadSongs(context)
         loadAlbums(context)
         loadArtists(context)

@@ -27,8 +27,10 @@ fun SearchBar(
         onValueChange = onTextChanged,
         leadingIcon = { Icon(Icons.Rounded.Search, null) },
         trailingIcon = {
-            IconButton(onClick = { onTextChanged("") }) {
-                Icon(Icons.Rounded.Clear, null)
+            if (value.isNotEmpty()) {
+                IconButton(onClick = { onTextChanged("") }) {
+                    Icon(Icons.Rounded.Clear, null)
+                }
             }
         },
         maxLines = 1, placeholder = { Text(hintText) },
