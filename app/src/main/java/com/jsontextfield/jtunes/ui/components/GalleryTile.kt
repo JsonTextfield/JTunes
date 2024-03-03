@@ -45,10 +45,10 @@ fun GalleryTile(title: String, bitmap: Bitmap? = null, onClick: () -> Unit = {})
             Text(
                 text = title,
                 overflow = TextOverflow.Ellipsis,
-                maxLines = 3,
+                maxLines = 2,
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .background(Color(0x99000000))

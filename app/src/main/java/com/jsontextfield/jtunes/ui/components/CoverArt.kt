@@ -24,10 +24,9 @@ import androidx.compose.ui.unit.dp
 fun CoverArt(bitmap: Bitmap?) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(20.dp))
             .aspectRatio(1f)
     ) {
-
         if (bitmap != null) {
             Image(
                 bitmap = bitmap.asImageBitmap(),
