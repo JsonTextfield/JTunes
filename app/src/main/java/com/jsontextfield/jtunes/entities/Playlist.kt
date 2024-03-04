@@ -1,6 +1,3 @@
 package com.jsontextfield.jtunes.entities
 
-open class Playlist {
-    var songs: List<Song> = ArrayList()
-    var title = ""
-}
+data class Playlist(val title: String = "", val songs: List<Song> = ArrayList())

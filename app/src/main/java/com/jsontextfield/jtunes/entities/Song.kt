@@ -4,16 +4,16 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class Song(
-    var title: String = "",
-    var artist: String = "",
-    var album: String = "",
-    var id: Long = 0L,
-    var path: String = "",
-    var genre: String = "",
-    var duration: Long = 1L,
-    var date: Long = 1000L,
-    var dateAdded: Long = 1000L,
-    var trackNumber: Int = 0,
+    val title: String = "",
+    val artist: String = "",
+    val album: String = "",
+    val id: Long = 0L,
+    val path: String = "",
+    val genre: String = "",
+    val duration: Long = 1L,
+    val date: Long = 1000L,
+    val dateAdded: Long = 1000L,
+    val trackNumber: Int = 0,
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         title = parcel.readString() ?: "",
