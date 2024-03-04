@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Error
@@ -55,6 +56,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
+import com.jsontextfield.jtunes.entities.Playlist
 import com.jsontextfield.jtunes.entities.Song
 import com.jsontextfield.jtunes.ui.components.AlbumList
 import com.jsontextfield.jtunes.ui.components.ArtistList
@@ -62,6 +64,7 @@ import com.jsontextfield.jtunes.ui.components.GenreList
 import com.jsontextfield.jtunes.ui.components.NowPlayingLarge
 import com.jsontextfield.jtunes.ui.components.NowPlayingSmall
 import com.jsontextfield.jtunes.ui.components.PlayerButton
+import com.jsontextfield.jtunes.ui.components.PlaylistList
 import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.components.SongList
 import com.jsontextfield.jtunes.ui.components.menu.Action
@@ -280,14 +283,12 @@ class MainActivity : ComponentActivity() {
                                         musicViewModel.onPageChanged(PageState.GENRES)
                                     },
                                 ),
-                                /*Action(
+                                Action(
                                     toolTip = stringResource(id = R.string.playlists),
                                     icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
                                     checked = pageState == PageState.PLAYLISTS,
-                                    onClick = {
-                                        musicViewModel.onPageChanged(PageState.PLAYLISTS)
-                                    },
-                                ),*/
+                                    onClick = { musicViewModel.onPageChanged(PageState.PLAYLISTS) },
+                                ),
                             )
                             actions.map { action ->
                                 IconButton(
@@ -345,10 +346,7 @@ class MainActivity : ComponentActivity() {
                             val listState = rememberLazyListState()
                             SongList(
                                 songs = musicLibrary.songs.filter { song ->
-                                    song.title.contains(
-                                        searchText,
-                                        true
-                                    )
+                                    song.title.contains(searchText, true)
                                 },
                                 selectedSong = selectedSong,
                                 listState = listState,
@@ -380,10 +378,7 @@ class MainActivity : ComponentActivity() {
                             )
                             AlbumList(
                                 albums = musicLibrary.albums.filter { album ->
-                                    album.title.contains(
-                                        searchText,
-                                        true
-                                    )
+                                    album.title.contains(searchText, true)
                                 },
                                 onItemClick = { album ->
                                     musicLibrary.queue =
@@ -418,10 +413,7 @@ class MainActivity : ComponentActivity() {
                             ArtistList(
                                 listState = listState,
                                 artists = musicLibrary.artists.filter { artist ->
-                                    artist.name.contains(
-                                        searchText,
-                                        true
-                                    )
+                                    artist.name.contains(searchText, true)
                                 },
                                 onItemClick = { artist ->
                                     musicLibrary.queue =
@@ -454,10 +446,7 @@ class MainActivity : ComponentActivity() {
                             GenreList(
                                 listState = listState,
                                 genres = musicLibrary.genres.filter { genre ->
-                                    genre.name.contains(
-                                        searchText,
-                                        true
-                                    )
+                                    genre.name.contains(searchText, true)
                                 },
                                 onItemClick = { genre ->
                                     musicLibrary.queue =
@@ -474,7 +463,38 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    else -> {}
+                    PageState.PLAYLISTS -> {
+                        Column {
+                            SearchBar(
+                                value = searchText,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(5.dp),
+                                hintText = "Search playlists",
+                                onTextChanged = { text ->
+                                    musicViewModel.onSearchTextChanged(text)
+                                }
+                            )
+                            val listState = rememberLazyListState()
+                            PlaylistList(
+                                listState = listState,
+                                playlists = listOf(
+                                    Playlist(
+                                        title = "Recently Added",
+                                        songs = musicLibrary.recentlyAddedSongs,
+                                    ),
+                                ).filter { playlist ->
+                                    playlist.title.contains(searchText, true)
+                                },
+                                onItemClick = { playlist ->
+                                    musicLibrary.queue = ArrayList(playlist.songs)
+                                    loadQueue()
+                                    mediaController?.play()
+                                    musicViewModel.onSongChanged(musicLibrary.queue.first())
+                                },
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -14,6 +14,9 @@ class MusicLibrary private constructor() {
     val artists = ArrayList<Artist>()
     val genres = ArrayList<Genre>()
 
+    val recentlyAddedSongs: List<Song>
+        get() = songs.sortedBy { it.dateAdded }.reversed().take(100)
+
     private fun loadAlbums(context: Context) {
         val projection = arrayOf(
             MediaStore.Audio.Albums.ALBUM,
@@ -52,6 +55,7 @@ class MusicLibrary private constructor() {
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.YEAR,
+            MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.TRACK,
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.GENRE,
@@ -67,7 +71,7 @@ class MusicLibrary private constructor() {
             songs.clear()
             queue.clear()
             while (cursor.moveToNext()) {
-                val trackString = cursor.getString(6) ?: ""
+                val trackString = cursor.getString(7) ?: ""
                 var trackNumber = 0
                 if (trackString.length == 4) {
                     trackNumber = trackString.substring(1).toInt()
@@ -82,9 +86,10 @@ class MusicLibrary private constructor() {
                         album = cursor.getString(2),
                         duration = cursor.getLong(4),
                         date = cursor.getLong(5),
+                        dateAdded = cursor.getLong(6),
                         trackNumber = trackNumber,
-                        id = cursor.getLong(7),
-                        genre = cursor.getString(8) ?: "Other",
+                        id = cursor.getLong(8),
+                        genre = cursor.getString(9) ?: "Other",
                     )
                 songs.add(song)
                 queue.add(song)
