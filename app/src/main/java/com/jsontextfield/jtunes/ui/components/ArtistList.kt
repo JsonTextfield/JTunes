@@ -62,9 +62,11 @@ fun ArtistList(
                         null
                     }
                 }
-                ArtistListTile(artist = artist, selected = false) {
-                    onItemClick(artist)
-                }
+                ListTile(
+                    title = artist.name,
+                    subtitle = artist.id.toString(),
+                    onClick = { onItemClick(artist) },
+                )
             }
             item {
                 Text(

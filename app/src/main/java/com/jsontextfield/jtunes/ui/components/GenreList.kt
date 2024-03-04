@@ -62,9 +62,11 @@ fun GenreList(
                         null
                     }
                 }
-                GenreListTile(genre = genre) {
-                    onItemClick(genre)
-                }
+                ListTile(
+                    title = genre.name,
+                    subtitle = genre.id.toString(),
+                    onClick = { onItemClick(genre) }
+                )
             }
             item {
                 Text(
