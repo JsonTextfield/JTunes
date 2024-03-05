@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.R
@@ -36,12 +37,17 @@ fun PlaylistList(
             items(playlists, { it.hashCode() }) { playlist ->
                 ListTile(
                     title = playlist.title,
+                    subtitle = pluralStringResource(
+                        R.plurals.songs,
+                        playlist.songs.size,
+                        playlist.songs.size
+                    ),
                     onClick = { onItemClick(playlist) },
                 )
             }
             item {
                 Text(
-                    "${playlists.size} playlists",
+                    pluralStringResource(R.plurals.playlists, playlists.size, playlists.size),
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth(),

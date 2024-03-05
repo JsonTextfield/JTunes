@@ -20,8 +20,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Album
 import java.io.FileNotFoundException
 
@@ -59,7 +61,7 @@ fun AlbumList(albums: List<Album>, onItemClick: (album: Album) -> Unit = {}) {
             }
             item {
                 Text(
-                    "${albums.size} albums",
+                    pluralStringResource(R.plurals.albums, albums.size, albums.size),
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth(),

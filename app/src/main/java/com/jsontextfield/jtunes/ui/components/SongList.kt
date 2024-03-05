@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.R
@@ -122,7 +123,7 @@ fun SongList(
             }
             item {
                 Text(
-                    "${songs.size} songs",
+                    pluralStringResource(R.plurals.songs, songs.size, songs.size),
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth(),

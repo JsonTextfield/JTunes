@@ -21,8 +21,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.jsontextfield.jtunes.MusicLibrary
 import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Genre
 import java.io.FileNotFoundException
@@ -64,13 +66,17 @@ fun GenreList(
                 }
                 ListTile(
                     title = genre.name,
-                    subtitle = genre.id.toString(),
+                    subtitle = pluralStringResource(
+                        R.plurals.songs,
+                        MusicLibrary.getInstance().songs.count { it.genre == genre.name },
+                        MusicLibrary.getInstance().songs.count { it.genre == genre.name }
+                    ),
                     onClick = { onItemClick(genre) }
                 )
             }
             item {
                 Text(
-                    "${genres.size} genres",
+                    pluralStringResource(R.plurals.genres, genres.size, genres.size),
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth(),
