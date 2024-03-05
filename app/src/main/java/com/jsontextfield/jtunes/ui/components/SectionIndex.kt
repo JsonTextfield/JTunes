@@ -64,14 +64,8 @@ private fun getIndexData(data: List<String>): LinkedHashMap<String, Int> {
     return result
 }
 
-private fun getSelectedIndex(
-    yPosition: Float,
-    sectionIndexHeight: Float,
-    positions: List<Pair<String, Int>>,
-): Int {
-    return ((yPosition / sectionIndexHeight) * positions.size)
-        .toInt()
-        .coerceIn(0, positions.size - 1)
+private fun getSelectedIndex(yPosition: Float, sectionIndexHeight: Float, itemCount: Int): Int {
+    return (yPosition / sectionIndexHeight * itemCount).toInt().coerceIn(0, itemCount - 1)
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -82,13 +76,13 @@ fun SectionIndex(
     selectedColour: Color = colorResource(R.color.colourAccent),
     minSectionHeight: Dp = 20.dp, // Minimum pixels needed to display each section
 ) {
-    var indexData = getIndexData(data).toList()
+    val indexData = getIndexData(data).toList()
     var selectedKey by remember { mutableStateOf("") }
     var offsetY by remember { mutableFloatStateOf(0f) }
     var columnHeightPx by remember { mutableFloatStateOf(0f) }
 
     val selectIndex = {
-        val listIndex = getSelectedIndex(offsetY, columnHeightPx, indexData)
+        val listIndex = getSelectedIndex(offsetY, columnHeightPx, indexData.size)
         if (selectedKey != indexData[listIndex].first) {
             selectedKey = indexData[listIndex].first
             val index = indexData[listIndex].second
@@ -141,8 +135,7 @@ fun SectionIndex(
             val minSectionHeighPx = minSectionHeight.toPx()
             val sectionsToShow = (columnHeightPx / minSectionHeighPx).toInt().coerceAtLeast(1)
             val skip = (indexData.size / sectionsToShow).coerceAtLeast(1)
-            indexData = indexData.filterIndexed { index, _ -> index % skip == 0 }
-            indexData.map {
+            indexData.filterIndexed { index, _ -> index % skip == 0 }.map {
                 Box(
                     modifier = Modifier
                         .weight(1f)
