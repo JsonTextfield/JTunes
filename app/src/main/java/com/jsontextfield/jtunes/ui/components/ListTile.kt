@@ -32,7 +32,7 @@ fun ListTile(
     selected: Boolean = false,
 ) {
     Surface(
-        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+        modifier = modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
         Row(
             modifier = Modifier
@@ -46,28 +46,32 @@ fun ListTile(
                     .weight(1f)
                     .padding(horizontal = 10.dp)
             ) {
-                Text(
-                    text = title,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    fontSize = 14.sp,
-                    lineHeight = 14.sp,
-                    color = if (selected) colorResource(id = R.color.colourAccent) else Color.Unspecified
-                )
-                Text(
-                    subtitle,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1,
-                    color = if (selected) {
-                        colorResource(id = R.color.colourAccent)
-                    } else if (isSystemInDarkTheme()) {
-                        Color.LightGray
-                    } else {
-                        Color.DarkGray
-                    },
-                    fontSize = 12.sp,
-                    lineHeight = 12.sp,
-                )
+                if (title.isNotBlank()) {
+                    Text(
+                        text = title,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
+                        color = if (selected) colorResource(id = R.color.colourAccent) else Color.Unspecified
+                    )
+                }
+                if (subtitle.isNotBlank()) {
+                    Text(
+                        subtitle,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        color = if (selected) {
+                            colorResource(id = R.color.colourAccent)
+                        } else if (isSystemInDarkTheme()) {
+                            Color.LightGray
+                        } else {
+                            Color.DarkGray
+                        },
+                        fontSize = 12.sp,
+                        lineHeight = 12.sp,
+                    )
+                }
             }
             trailing()
         }

@@ -21,9 +21,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun CoverArt(bitmap: Bitmap?) {
+fun CoverArt(bitmap: Bitmap?, modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .aspectRatio(1f)
     ) {
