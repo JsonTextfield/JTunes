@@ -15,7 +15,7 @@ class MusicLibrary private constructor() {
     val genres = ArrayList<Genre>()
 
     val recentlyAddedSongs: List<Song>
-        get() = songs.sortedBy { it.dateAdded }.reversed().take(100)
+        get() = songs.sortedBy { it.dateAdded }.reversed().take(50)
 
     private fun loadAlbums(context: Context) {
         val projection = arrayOf(
@@ -69,7 +69,6 @@ class MusicLibrary private constructor() {
         )
         if (cursor != null) {
             songs.clear()
-            queue.clear()
             while (cursor.moveToNext()) {
                 val trackString = cursor.getString(7) ?: ""
                 var trackNumber = 0
@@ -92,7 +91,6 @@ class MusicLibrary private constructor() {
                         genre = cursor.getString(9) ?: "Other",
                     )
                 songs.add(song)
-                queue.add(song)
             }
             cursor.close()
         }

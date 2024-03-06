@@ -15,6 +15,9 @@
     <string name="skip_forward">Skip forward</string>
     <string name="skip_backward">Skip backward</string>
     <string name="title_activity_now_playing">NowPlayingActivity</string>
+    <string name="recently_added">Recently Added</string>
+    <string name="recently_played">Recently Played</string>
+    <string name="most_played">Most Played</string>
 
     <plurals name="songs">
         <item quantity="one">1 song</item>

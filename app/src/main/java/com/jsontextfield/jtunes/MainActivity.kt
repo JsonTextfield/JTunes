@@ -3,7 +3,6 @@ package com.jsontextfield.jtunes
 import android.content.ComponentName
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -21,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Error
@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,8 +47,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -74,24 +77,28 @@ import kotlinx.coroutines.delay
 @UnstableApi
 class MainActivity : ComponentActivity() {
     private val musicLibrary = MusicLibrary.getInstance()
-    private val musicViewModel by viewModels<MusicViewModel>()
+    private val musicViewModel by viewModels<MusicViewModel> { MusicViewModel.MusicViewModelFactory }
     private var mediaController: MediaController? = null
+    private val playlists = ArrayList<Playlist>()
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             musicLibrary.load(this@MainActivity)
+
+            playlists.add(
+                Playlist(
+                    title = ContextCompat.getString(this@MainActivity, R.string.recently_added),
+                    songs = musicLibrary.recentlyAddedSongs,
+                )
+            )
             val sessionToken =
                 SessionToken(this, ComponentName(this, MusicPlayerService::class.java))
             val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
             controllerFuture.addListener(
                 {
                     mediaController = controllerFuture.get()
-                    Log.e(
-                        "MEDIA_CONTROLLER",
-                        "Current index: ${mediaController?.currentMediaItemIndex}"
-                    )
                     mediaController?.addListener(object : Player.Listener {
 
                         override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
@@ -116,12 +123,17 @@ class MainActivity : ComponentActivity() {
                             musicViewModel.onLoopModeChanged(repeatMode)
                         }
                     })
-                    if (mediaController?.mediaItemCount == 0) {
-                        loadQueue()
+                    mediaController?.let {
+                        if (it.mediaItemCount == 0) {
+                            loadQueue()
+                        } else {
+                            val currentSong = musicLibrary.songs.find { song ->
+                                song.title == it.currentMediaItem?.mediaMetadata?.title
+                                        && song.artist == it.currentMediaItem?.mediaMetadata?.artist
+                            } ?: Song()
+                            musicViewModel.onSongChanged(currentSong)
+                        }
                     }
-                    musicViewModel.onSongChanged(
-                        musicLibrary.queue[mediaController?.currentMediaItemIndex ?: 0]
-                    )
                     musicViewModel.setPlaying(mediaController?.isPlaying == true)
                     musicViewModel.onUIStateChanged(UIState.LOADED)
                 },
@@ -322,11 +334,23 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             },
-        ) {
+            floatingActionButton = {
+                if (pageState == PageState.PLAYLISTS) {
+                    FloatingActionButton(
+                        containerColor = colorResource(R.color.colourAccent),
+                        onClick = {
+                            // create new playlist
+                        },
+                    ) {
+                        Icon(Icons.Rounded.Add, null)
+                    }
+                }
+            },
+        ) { paddingValues ->
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(it),
+                    .padding(paddingValues),
                 color = MaterialTheme.colorScheme.background
             ) {
                 val searchText by musicViewModel.searchText.collectAsState()
@@ -341,6 +365,16 @@ class MainActivity : ComponentActivity() {
                                 hintText = "Search from ${musicLibrary.songs.size} songs",
                                 onTextChanged = { text ->
                                     musicViewModel.onSearchTextChanged(text)
+                                },
+                                onCreatePlaylist = {
+                                    playlists.add(
+                                        Playlist(
+                                            title = musicViewModel.searchText.value,
+                                            songs = musicLibrary.songs.filter { song ->
+                                                song.title.contains(searchText, true)
+                                            },
+                                        )
+                                    )
                                 }
                             )
                             val listState = rememberLazyListState()
@@ -470,7 +504,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(5.dp),
-                                hintText = "Search playlists",
+                                hintText = "Search from ${pluralStringResource(R.plurals.playlists, playlists.size, playlists.size)}",
                                 onTextChanged = { text ->
                                     musicViewModel.onSearchTextChanged(text)
                                 }
@@ -478,12 +512,7 @@ class MainActivity : ComponentActivity() {
                             val listState = rememberLazyListState()
                             PlaylistList(
                                 listState = listState,
-                                playlists = listOf(
-                                    Playlist(
-                                        title = "Recently Added",
-                                        songs = musicLibrary.recentlyAddedSongs,
-                                    ),
-                                ).filter { playlist ->
+                                playlists = playlists.sortedBy { it.title }.filter { playlist ->
                                     playlist.title.contains(searchText, true)
                                 },
                                 onItemClick = { playlist ->
@@ -511,7 +540,7 @@ class MainActivity : ComponentActivity() {
                 mediaController?.let {
                     while (true) {
                         progress = it.currentPosition
-                        delay(16)
+                        delay(50)
                     }
                 }
             }

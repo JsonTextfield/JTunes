@@ -1,8 +1,10 @@
 package com.jsontextfield.jtunes.ui.components
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
@@ -18,6 +20,7 @@ fun SearchBar(
     modifier: Modifier = Modifier,
     hintText: String = "",
     onTextChanged: (String) -> Unit = {},
+    onCreatePlaylist: () -> Unit = {},
     value: String = ""
 ) {
     OutlinedTextField(
@@ -28,11 +31,16 @@ fun SearchBar(
         leadingIcon = { Icon(Icons.Rounded.Search, null) },
         trailingIcon = {
             if (value.isNotEmpty()) {
-                IconButton(onClick = { onTextChanged("") }) {
-                    Icon(Icons.Rounded.Clear, null)
+                Row {
+                    IconButton(onClick = onCreatePlaylist) {
+                        Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null)
+                    }
+                    IconButton(onClick = { onTextChanged("") }) {
+                        Icon(Icons.Rounded.Clear, null)
+                    }
                 }
             }
         },
-        maxLines = 1, placeholder = { Text(hintText) },
+        maxLines = 1, placeholder = { Text(hintText, maxLines = 1) },
     )
 }
