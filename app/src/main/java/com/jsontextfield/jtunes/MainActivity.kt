@@ -231,15 +231,19 @@ class MainActivity : ComponentActivity() {
 
                 PlayerButton.NEXT -> {
                     mediaController?.let {
-                        it.seekToNextMediaItem()
-                        musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
+                        if (it.mediaItemCount > 0) {
+                            it.seekToNextMediaItem()
+                            musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
+                        }
                     }
                 }
 
                 PlayerButton.PREVIOUS -> {
                     mediaController?.let {
-                        it.seekToPrevious()
-                        musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
+                        if (it.mediaItemCount > 0) {
+                            it.seekToPrevious()
+                            musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
+                        }
                     }
                 }
 
@@ -504,7 +508,13 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(5.dp),
-                                hintText = "Search from ${pluralStringResource(R.plurals.playlists, playlists.size, playlists.size)}",
+                                hintText = "Search from ${
+                                    pluralStringResource(
+                                        R.plurals.playlists,
+                                        playlists.size,
+                                        playlists.size
+                                    )
+                                }",
                                 onTextChanged = { text ->
                                     musicViewModel.onSearchTextChanged(text)
                                 }
