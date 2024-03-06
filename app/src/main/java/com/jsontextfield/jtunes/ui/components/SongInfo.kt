@@ -15,11 +15,12 @@ import androidx.compose.ui.unit.sp
 import com.jsontextfield.jtunes.entities.Song
 
 @Composable
-fun SongInfo(song: Song) {
-    Column(modifier = Modifier.padding(vertical = 10.dp)) {
+fun SongInfo(song: Song, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(vertical = 10.dp)) {
         Text(
             text = song.title,
             textAlign = TextAlign.Center,
+            maxLines = 1,
             fontSize = 20.sp,
             modifier = Modifier
                 .fillMaxWidth()
@@ -30,6 +31,7 @@ fun SongInfo(song: Song) {
             text = song.artist,
             color = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
             textAlign = TextAlign.Center,
+            maxLines = 1,
             fontSize = 16.sp,
             modifier = Modifier
                 .fillMaxWidth()
@@ -40,6 +42,7 @@ fun SongInfo(song: Song) {
             text = song.album,
             color = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
             textAlign = TextAlign.Center,
+            maxLines = 1,
             fontSize = 16.sp,
             modifier = Modifier
                 .fillMaxWidth()

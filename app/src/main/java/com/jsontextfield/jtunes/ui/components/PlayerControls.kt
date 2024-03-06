@@ -33,6 +33,7 @@ enum class PlayerButton { PLAY_PAUSE, NEXT, PREVIOUS, SHUFFLE, LOOP, }
 
 @Composable
 fun PlayerControls(
+    modifier: Modifier = Modifier,
     songDuration: Long = 0L,
     position: Float = 0f,
     onPlayerButtonPressed: (PlayerButton) -> Unit = {},
@@ -41,7 +42,7 @@ fun PlayerControls(
     isShuffling: Boolean = true,
     isPlaying: Boolean = true,
 ) {
-    Column {
+    Column(modifier = modifier) {
         Slider(
             modifier = Modifier.padding(horizontal = 20.dp),
             value = position,

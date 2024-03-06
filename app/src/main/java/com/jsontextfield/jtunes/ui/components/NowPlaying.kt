@@ -5,6 +5,12 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Size
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.basicMarquee
@@ -18,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.FeaturedPlayList
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -33,8 +40,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import com.jsontextfield.jtunes.entities.Song
-import kotlinx.coroutines.delay
 import java.io.FileNotFoundException
 import kotlin.math.cos
 
@@ -177,15 +183,15 @@ fun NowPlayingLarge(
                 }
             }
             if (bitmap != null) {
-                var blur by remember { mutableFloatStateOf(20f) }
-                LaunchedEffect(isPlaying) {
-                    var i = 0f
-                    while (isPlaying) {
-                        blur = 15 + 10 * cos(i)
-                        i += 0.01f
-                        delay(16)
-                    }
-                }
+                val i by rememberInfiniteTransition().animateFloat(
+                    initialValue = 0f,
+                    targetValue = 2 * Math.PI.toFloat(),
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(8000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    )
+                )
+                val blur by remember { derivedStateOf { 15 + 10 * cos(i) } }
                 Image(
                     bitmap = bitmap!!.asImageBitmap(),
                     contentDescription = null,
@@ -210,28 +216,52 @@ fun NowPlayingLarge(
                                 )
                             }
                         },
+                        actions = {
+                            IconButton(onClick = {}) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.FeaturedPlayList,
+                                    contentDescription = null
+                                )
+                            }
+                        }
                     )
                 },
             ) {
-                val configuration = LocalConfiguration.current
-                PortLand(
-                    isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
-                    modifier = Modifier
-                        .padding(it)
-                        .padding(30.dp),
-                ) {
-                    CoverArt(bitmap)
-                    Column {
-                        SongInfo(song)
-                        PlayerControls(
-                            song.duration,
-                            position,
-                            onPlayerButtonPressed,
-                            onSeek,
-                            loopMode,
-                            isShuffling,
-                            isPlaying,
-                        )
+
+                val config = LocalConfiguration.current
+                if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    Row(modifier = Modifier.padding(it).padding(30.dp)) {
+                        CoverArt(bitmap, modifier = Modifier.align(Alignment.CenterVertically).weight(.3f))
+                        Column(modifier = Modifier.weight(.9f)) {
+                            SongInfo(song)
+                            PlayerControls(
+                                modifier = Modifier.weight(1f),
+                                song.duration,
+                                position,
+                                onPlayerButtonPressed,
+                                onSeek,
+                                loopMode,
+                                isShuffling,
+                                isPlaying,
+                            )
+                        }
+                    }
+                } else {
+                    Column(modifier = Modifier.padding(it).padding(30.dp)) {
+                        CoverArt(bitmap, modifier = Modifier.align(Alignment.CenterHorizontally).weight(.3f))
+                        Column(modifier = Modifier.weight(.9f)) {
+                            SongInfo(song)
+                            PlayerControls(
+                                modifier = Modifier.weight(1f),
+                                song.duration,
+                                position,
+                                onPlayerButtonPressed,
+                                onSeek,
+                                loopMode,
+                                isShuffling,
+                                isPlaying,
+                            )
+                        }
                     }
                 }
             }
