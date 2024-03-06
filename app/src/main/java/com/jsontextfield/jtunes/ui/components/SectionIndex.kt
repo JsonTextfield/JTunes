@@ -38,6 +38,7 @@ import com.jsontextfield.jtunes.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 private fun getIndexData(data: List<String>): LinkedHashMap<String, Int> {
     val dataString = data.map {
@@ -132,9 +133,8 @@ fun SectionIndex(
             }
     ) {
         with(LocalDensity.current) {
-            val minSectionHeighPx = minSectionHeight.toPx()
-            val sectionsToShow = (columnHeightPx / minSectionHeighPx).toInt().coerceAtLeast(1)
-            val skip = (indexData.size / sectionsToShow).coerceAtLeast(1)
+            val sectionsToShow = max((columnHeightPx / minSectionHeight.toPx()).toInt(), 1)
+            val skip = max((indexData.size / sectionsToShow), 1)
             indexData.filterIndexed { index, _ -> index % skip == 0 }.map {
                 Box(
                     modifier = Modifier
