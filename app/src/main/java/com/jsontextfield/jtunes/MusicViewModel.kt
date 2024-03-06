@@ -1,6 +1,9 @@
 package com.jsontextfield.jtunes
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.media3.common.Player
 import com.jsontextfield.jtunes.entities.Song
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,6 +64,14 @@ class MusicViewModel : ViewModel() {
 
     fun onUIStateChanged(newUIState: UIState) {
         _uiState.value = newUIState
+    }
+
+    companion object {
+        val MusicViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                MusicViewModel()
+            }
+        }
     }
 }
 
