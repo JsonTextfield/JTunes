@@ -43,8 +43,10 @@ fun CoverArt(bitmap: Bitmap?, modifier: Modifier = Modifier) {
                 Icon(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .fillMaxSize(0.5f),
-                    imageVector = Icons.Rounded.MusicNote, contentDescription = null,
+                        .fillMaxSize(.5f),
+                    imageVector = Icons.Rounded.MusicNote,
+                    contentDescription = null,
+                    tint = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
                 )
             }
         }
@@ -55,8 +57,8 @@ fun CoverArt(bitmap: Bitmap?, modifier: Modifier = Modifier) {
 fun CoverArtSmall(bitmap: Bitmap?) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .widthIn(0.dp, 50.dp)
+            .clip(RoundedCornerShape(5.dp))
+            .widthIn(max = 50.dp)
             .aspectRatio(1f)
     ) {
         if (bitmap != null) {
@@ -75,6 +77,7 @@ fun CoverArtSmall(bitmap: Bitmap?) {
                     modifier = Modifier.align(Alignment.Center),
                     imageVector = Icons.Rounded.MusicNote,
                     contentDescription = null,
+                    tint = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
                 )
             }
         }
