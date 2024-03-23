@@ -28,9 +28,9 @@ fun ActionBar(
 
     val overflowActions = ArrayList<Action>()
     for (action in actions) {
-        if (action.condition) {
+        if (action.isVisible) {
             if (remainingActions-- > 0) {
-                if (action.isMenu) {
+                if (action.menuContent != null) {
                     var showMenu by remember { mutableStateOf(false) }
                     IconMenu(showMenu, action) {
                         showMenu = !showMenu
@@ -40,7 +40,7 @@ fun ActionBar(
                 else {
                     MenuItem(
                         icon = action.icon,
-                        tooltip = action.toolTip,
+                        tooltip = action.tooltip,
                         visible = true
                     ) {
                         action.onClick()

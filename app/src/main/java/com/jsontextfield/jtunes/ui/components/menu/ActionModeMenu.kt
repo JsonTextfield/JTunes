@@ -26,8 +26,8 @@ fun ActionModeMenu(actions: List<Action>, onItemSelected: () -> Unit) {
         if (remainingActions-- > 0) {
             MenuItem(
                 icon = action.icon,
-                tooltip = action.toolTip,
-                visible = action.condition
+                tooltip = action.tooltip,
+                visible = action.isVisible
             ) {
                 action.onClick()
                 onItemSelected()
