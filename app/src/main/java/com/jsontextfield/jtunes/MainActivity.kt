@@ -14,19 +14,23 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -71,8 +75,10 @@ import com.jsontextfield.jtunes.ui.components.PlaylistList
 import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.components.SongList
 import com.jsontextfield.jtunes.ui.components.menu.Action
+import com.jsontextfield.jtunes.ui.components.menu.RadioMenuItem
 import com.jsontextfield.jtunes.ui.theme.JTunesTheme
 import kotlinx.coroutines.delay
+import java.util.Locale
 
 @UnstableApi
 class MainActivity : ComponentActivity() {
@@ -268,53 +274,53 @@ class MainActivity : ComponentActivity() {
                         actions = {
                             val actions: List<Action> = listOf(
                                 Action(
-                                    toolTip = stringResource(id = R.string.songs),
+                                    tooltip = stringResource(id = R.string.songs),
                                     icon = Icons.Rounded.MusicNote,
-                                    checked = pageState == PageState.SONGS,
+                                    isChecked = pageState == PageState.SONGS,
                                     onClick = {
                                         musicViewModel.onPageChanged(PageState.SONGS)
                                     },
                                 ),
                                 Action(
-                                    toolTip = stringResource(id = R.string.albums),
+                                    tooltip = stringResource(id = R.string.albums),
                                     icon = Icons.Rounded.Album,
-                                    checked = pageState == PageState.ALBUMS,
+                                    isChecked = pageState == PageState.ALBUMS,
                                     onClick = {
                                         musicViewModel.onPageChanged(PageState.ALBUMS)
                                     },
                                 ),
                                 Action(
-                                    toolTip = stringResource(id = R.string.artists),
+                                    tooltip = stringResource(id = R.string.artists),
                                     icon = Icons.Rounded.Person,
-                                    checked = pageState == PageState.ARTISTS,
+                                    isChecked = pageState == PageState.ARTISTS,
                                     onClick = {
                                         musicViewModel.onPageChanged(PageState.ARTISTS)
                                     },
                                 ),
                                 Action(
-                                    toolTip = stringResource(id = R.string.genres),
+                                    tooltip = stringResource(id = R.string.genres),
                                     icon = Icons.Rounded.Brush,
-                                    checked = pageState == PageState.GENRES,
+                                    isChecked = pageState == PageState.GENRES,
                                     onClick = {
                                         musicViewModel.onPageChanged(PageState.GENRES)
                                     },
                                 ),
                                 Action(
-                                    toolTip = stringResource(id = R.string.playlists),
-                                    icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
-                                    checked = pageState == PageState.PLAYLISTS,
+                                    tooltip = stringResource(id = R.string.playlists),
+                                    icon = Icons.AutoMirrored.Rounded.QueueMusic,
+                                    isChecked = pageState == PageState.PLAYLISTS,
                                     onClick = { musicViewModel.onPageChanged(PageState.PLAYLISTS) },
                                 ),
                             )
                             actions.map { action ->
                                 IconButton(
-                                    onClick = action.onClick,
                                     modifier = Modifier.weight(1f),
+                                    onClick = action.onClick,
                                 ) {
                                     Icon(
                                         imageVector = action.icon,
                                         contentDescription = null,
-                                        tint = if (action.checked) {
+                                        tint = if (action.isChecked) {
                                             colorResource(R.color.colourAccent)
                                         } else if (isSystemInDarkTheme()) {
                                             Color.White
@@ -381,14 +387,53 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             )
+                            var showSortMenu by remember { mutableStateOf(false) }
+                            var songSortMode by remember { mutableStateOf(SongSortMode.Name) }
+
+                            Row {
+                                IconButton(onClick = { showSortMenu = true }) {
+                                    Icon(Icons.AutoMirrored.Rounded.Sort, null)
+                                    DropdownMenu(
+                                        expanded = showSortMenu,
+                                        onDismissRequest = { showSortMenu = false }) {
+                                        SongSortMode.entries.map {
+                                            RadioMenuItem(
+                                                title = it.name,
+                                                selected = it == songSortMode
+                                            ) {
+                                                songSortMode = it
+                                                showSortMenu = false
+                                            }
+                                        }
+                                    }
+                                }
+                                IconButton(onClick = {
+                                    mediaController?.shuffleModeEnabled = true
+                                    musicLibrary.queue = ArrayList(musicLibrary.songs)
+                                    loadQueue()
+                                    mediaController?.play()
+                                }) {
+                                    Icon(Icons.Rounded.Shuffle, null)
+                                }
+                                IconButton(onClick = { }, enabled = isPlaying) {
+                                    Icon(Icons.AutoMirrored.Rounded.QueueMusic, null)
+                                }
+                            }
                             val listState = rememberLazyListState()
                             SongList(
                                 songs = musicLibrary.songs.filter { song ->
                                     song.title.contains(searchText, true)
+                                }.sortedBy {
+                                    if (songSortMode == SongSortMode.Name) {
+                                        it.title.lowercase(Locale.getDefault())
+                                    } else {
+                                        it.artist.lowercase(Locale.getDefault())
+                                    }
                                 },
                                 selectedSong = selectedSong,
                                 listState = listState,
                                 modifier = Modifier.weight(1f),
+                                sortMode = songSortMode,
                                 onSongClicked = { song ->
                                     musicLibrary.queue = ArrayList(musicLibrary.songs)
                                     loadQueue()
