@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -82,8 +84,22 @@ fun SongList(
                         CoverArtSmall(bitmap)
                     },
                     trailing = {
-                        IconButton(onClick = {}) {
+                        var showSongMenu by remember { mutableStateOf(false) }
+                        IconButton(onClick = { showSongMenu = true }) {
                             Icon(Icons.Rounded.MoreVert, "")
+                            DropdownMenu(
+                                expanded = showSongMenu,
+                                onDismissRequest = { showSongMenu = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("Play next") },
+                                    onClick = { showSongMenu = false })
+                                DropdownMenuItem(
+                                    text = { Text("Add to queue") },
+                                    onClick = { showSongMenu = false })
+                                DropdownMenuItem(
+                                    text = { Text("Details") },
+                                    onClick = { showSongMenu = false })
+                            }
                         }
                     },
                 )
