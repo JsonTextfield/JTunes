@@ -11,26 +11,23 @@ import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -46,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,20 +63,18 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.jsontextfield.jtunes.entities.Playlist
 import com.jsontextfield.jtunes.entities.Song
-import com.jsontextfield.jtunes.ui.components.AlbumList
-import com.jsontextfield.jtunes.ui.components.ArtistList
-import com.jsontextfield.jtunes.ui.components.GenreList
 import com.jsontextfield.jtunes.ui.components.NowPlayingLarge
 import com.jsontextfield.jtunes.ui.components.NowPlayingSmall
 import com.jsontextfield.jtunes.ui.components.PlayerButton
-import com.jsontextfield.jtunes.ui.components.PlaylistList
-import com.jsontextfield.jtunes.ui.components.SearchBar
-import com.jsontextfield.jtunes.ui.components.SongList
 import com.jsontextfield.jtunes.ui.components.menu.Action
-import com.jsontextfield.jtunes.ui.components.menu.RadioMenuItem
+import com.jsontextfield.jtunes.ui.pages.AlbumPage
+import com.jsontextfield.jtunes.ui.pages.ArtistPage
+import com.jsontextfield.jtunes.ui.pages.GenrePage
+import com.jsontextfield.jtunes.ui.pages.PlaylistPage
+import com.jsontextfield.jtunes.ui.pages.SongPage
 import com.jsontextfield.jtunes.ui.theme.JTunesTheme
 import kotlinx.coroutines.delay
-import java.util.Locale
+import kotlinx.coroutines.launch
 
 @UnstableApi
 class MainActivity : ComponentActivity() {
@@ -213,7 +209,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     @Composable
     fun MainPage() {
         val pageState by musicViewModel.pageState.collectAsState()
@@ -222,6 +218,7 @@ class MainActivity : ComponentActivity() {
         val isShuffling by musicViewModel.isShuffling.collectAsState()
         val loopMode by musicViewModel.loopMode.collectAsState()
         var showNowPlayingScreen by remember { mutableStateOf(false) }
+        val pagerState = rememberPagerState(pageCount = { PageState.entries.size })
 
         val onPlayerButtonPressed: (PlayerButton) -> Unit = { playerButton ->
             when (playerButton) {
@@ -272,44 +269,43 @@ class MainActivity : ComponentActivity() {
                     TopAppBar(
                         title = {},
                         actions = {
+                            val coroutineScope = rememberCoroutineScope()
+                            val onPageChanged: (PageState) -> Unit = { pageState ->
+                                coroutineScope.launch {
+                                    pagerState.scrollToPage(pageState.index)
+                                    musicViewModel.onPageChanged(pageState)
+                                }
+                            }
                             val actions: List<Action> = listOf(
                                 Action(
                                     tooltip = stringResource(id = R.string.songs),
                                     icon = Icons.Rounded.MusicNote,
                                     isChecked = pageState == PageState.SONGS,
-                                    onClick = {
-                                        musicViewModel.onPageChanged(PageState.SONGS)
-                                    },
+                                    onClick = { onPageChanged(PageState.SONGS) },
                                 ),
                                 Action(
                                     tooltip = stringResource(id = R.string.albums),
                                     icon = Icons.Rounded.Album,
                                     isChecked = pageState == PageState.ALBUMS,
-                                    onClick = {
-                                        musicViewModel.onPageChanged(PageState.ALBUMS)
-                                    },
+                                    onClick = { onPageChanged(PageState.ALBUMS) },
                                 ),
                                 Action(
                                     tooltip = stringResource(id = R.string.artists),
                                     icon = Icons.Rounded.Person,
                                     isChecked = pageState == PageState.ARTISTS,
-                                    onClick = {
-                                        musicViewModel.onPageChanged(PageState.ARTISTS)
-                                    },
+                                    onClick = { onPageChanged(PageState.ARTISTS) },
                                 ),
                                 Action(
                                     tooltip = stringResource(id = R.string.genres),
                                     icon = Icons.Rounded.Brush,
                                     isChecked = pageState == PageState.GENRES,
-                                    onClick = {
-                                        musicViewModel.onPageChanged(PageState.GENRES)
-                                    },
+                                    onClick = { onPageChanged(PageState.GENRES) },
                                 ),
                                 Action(
                                     tooltip = stringResource(id = R.string.playlists),
                                     icon = Icons.AutoMirrored.Rounded.QueueMusic,
                                     isChecked = pageState == PageState.PLAYLISTS,
-                                    onClick = { musicViewModel.onPageChanged(PageState.PLAYLISTS) },
+                                    onClick = { onPageChanged(PageState.PLAYLISTS) },
                                 ),
                             )
                             actions.map { action ->
@@ -364,18 +360,16 @@ class MainActivity : ComponentActivity() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 val searchText by musicViewModel.searchText.collectAsState()
-                when (pageState) {
-                    PageState.SONGS -> {
-                        Column {
-                            SearchBar(
-                                value = searchText,
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(5.dp),
-                                hintText = "Search from ${musicLibrary.songs.size} songs",
-                                onTextChanged = { text ->
-                                    musicViewModel.onSearchTextChanged(text)
+                HorizontalPager(pagerState) { index ->
+                    when (index) {
+                        PageState.SONGS.index -> {
+                            musicViewModel.onPageChanged(PageState.SONGS)
+                            SongPage(
+                                musicViewModel = musicViewModel,
+                                songs = musicLibrary.songs.filter { song ->
+                                    song.title.contains(searchText, true)
                                 },
+                                hintText = "Search from ${musicLibrary.songs.size} songs",
                                 onCreatePlaylist = {
                                     playlists.add(
                                         Playlist(
@@ -385,56 +379,14 @@ class MainActivity : ComponentActivity() {
                                             },
                                         )
                                     )
-                                }
-                            )
-                            var showSortMenu by remember { mutableStateOf(false) }
-                            var songSortMode by remember { mutableStateOf(SongSortMode.Name) }
-
-                            Row {
-                                IconButton(onClick = { showSortMenu = true }) {
-                                    Icon(Icons.AutoMirrored.Rounded.Sort, null)
-                                    DropdownMenu(
-                                        expanded = showSortMenu,
-                                        onDismissRequest = { showSortMenu = false }) {
-                                        SongSortMode.entries.map {
-                                            RadioMenuItem(
-                                                title = it.name,
-                                                selected = it == songSortMode
-                                            ) {
-                                                songSortMode = it
-                                                showSortMenu = false
-                                            }
-                                        }
-                                    }
-                                }
-                                IconButton(onClick = {
+                                },
+                                onShuffleClick = {
                                     mediaController?.shuffleModeEnabled = true
                                     musicLibrary.queue = ArrayList(musicLibrary.songs)
                                     loadQueue()
                                     mediaController?.play()
-                                }) {
-                                    Icon(Icons.Rounded.Shuffle, null)
-                                }
-                                IconButton(onClick = { }, enabled = isPlaying) {
-                                    Icon(Icons.AutoMirrored.Rounded.QueueMusic, null)
-                                }
-                            }
-                            val listState = rememberLazyListState()
-                            SongList(
-                                songs = musicLibrary.songs.filter { song ->
-                                    song.title.contains(searchText, true)
-                                }.sortedBy {
-                                    if (songSortMode == SongSortMode.Name) {
-                                        it.title.lowercase(Locale.getDefault())
-                                    } else {
-                                        it.artist.lowercase(Locale.getDefault())
-                                    }
                                 },
-                                selectedSong = selectedSong,
-                                listState = listState,
-                                modifier = Modifier.weight(1f),
-                                sortMode = songSortMode,
-                                onSongClicked = { song ->
+                                onItemClick = { song ->
                                     musicLibrary.queue = ArrayList(musicLibrary.songs)
                                     loadQueue()
                                     mediaController?.seekToDefaultPosition(
@@ -442,27 +394,18 @@ class MainActivity : ComponentActivity() {
                                     )
                                     mediaController?.play()
                                     musicViewModel.onSongChanged(song)
-                                },
-                            )
-                        }
-                    }
-
-                    PageState.ALBUMS -> {
-                        Column {
-                            SearchBar(
-                                value = searchText,
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(5.dp),
-                                hintText = "Search from ${musicLibrary.albums.size} albums",
-                                onTextChanged = { text ->
-                                    musicViewModel.onSearchTextChanged(text)
                                 }
                             )
-                            AlbumList(
+                        }
+
+                        PageState.ALBUMS.index -> {
+                            musicViewModel.onPageChanged(PageState.ALBUMS)
+                            AlbumPage(
+                                musicViewModel = musicViewModel,
                                 albums = musicLibrary.albums.filter { album ->
                                     album.title.contains(searchText, true)
                                 },
+                                hintText = "Search from ${musicLibrary.albums.size} albums",
                                 onItemClick = { album ->
                                     musicLibrary.queue =
                                         ArrayList(musicLibrary.songs
@@ -478,26 +421,15 @@ class MainActivity : ComponentActivity() {
                                 },
                             )
                         }
-                    }
 
-                    PageState.ARTISTS -> {
-                        Column {
-                            SearchBar(
-                                value = searchText,
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(5.dp),
-                                hintText = "Search from ${musicLibrary.artists.size} artists",
-                                onTextChanged = { text ->
-                                    musicViewModel.onSearchTextChanged(text)
-                                }
-                            )
-                            val listState = rememberLazyListState()
-                            ArtistList(
-                                listState = listState,
+                        PageState.ARTISTS.index -> {
+                            musicViewModel.onPageChanged(PageState.ARTISTS)
+                            ArtistPage(
+                                musicViewModel = musicViewModel,
                                 artists = musicLibrary.artists.filter { artist ->
                                     artist.name.contains(searchText, true)
                                 },
+                                hintText = "Search from ${musicLibrary.artists.size} artists",
                                 onItemClick = { artist ->
                                     musicLibrary.queue =
                                         ArrayList(musicLibrary.songs
@@ -511,26 +443,15 @@ class MainActivity : ComponentActivity() {
                                 },
                             )
                         }
-                    }
 
-                    PageState.GENRES -> {
-                        Column {
-                            SearchBar(
-                                value = searchText,
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(5.dp),
-                                hintText = "Search from ${musicLibrary.genres.size} genres",
-                                onTextChanged = { text ->
-                                    musicViewModel.onSearchTextChanged(text)
-                                }
-                            )
-                            val listState = rememberLazyListState()
-                            GenreList(
-                                listState = listState,
+                        PageState.GENRES.index -> {
+                            musicViewModel.onPageChanged(PageState.GENRES)
+                            GenrePage(
+                                musicViewModel = musicViewModel,
                                 genres = musicLibrary.genres.filter { genre ->
                                     genre.name.contains(searchText, true)
                                 },
+                                hintText = "Search from ${musicLibrary.genres.size} genres",
                                 onItemClick = { genre ->
                                     musicLibrary.queue =
                                         ArrayList(musicLibrary.songs
@@ -544,15 +465,14 @@ class MainActivity : ComponentActivity() {
                                 },
                             )
                         }
-                    }
 
-                    PageState.PLAYLISTS -> {
-                        Column {
-                            SearchBar(
-                                value = searchText,
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(5.dp),
+                        PageState.PLAYLISTS.index -> {
+                            musicViewModel.onPageChanged(PageState.PLAYLISTS)
+                            PlaylistPage(
+                                musicViewModel = musicViewModel,
+                                playlists = playlists.sortedBy { it.title }.filter { playlist ->
+                                    playlist.title.contains(searchText, true)
+                                },
                                 hintText = "Search from ${
                                     pluralStringResource(
                                         R.plurals.playlists,
@@ -560,16 +480,6 @@ class MainActivity : ComponentActivity() {
                                         playlists.size
                                     )
                                 }",
-                                onTextChanged = { text ->
-                                    musicViewModel.onSearchTextChanged(text)
-                                }
-                            )
-                            val listState = rememberLazyListState()
-                            PlaylistList(
-                                listState = listState,
-                                playlists = playlists.sortedBy { it.title }.filter { playlist ->
-                                    playlist.title.contains(searchText, true)
-                                },
                                 onItemClick = { playlist ->
                                     musicLibrary.queue = ArrayList(playlist.songs)
                                     loadQueue()
