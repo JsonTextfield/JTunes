@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 
-enum class PlayerButton { PLAY_PAUSE, NEXT, PREVIOUS, SHUFFLE, LOOP, }
+enum class PlayerButton { PLAY_PAUSE, NEXT, PREVIOUS, PREVIOUS_SONG, SHUFFLE, LOOP, }
 
 @Composable
 fun PlayerControls(

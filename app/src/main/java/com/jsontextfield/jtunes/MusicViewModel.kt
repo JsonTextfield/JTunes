@@ -34,6 +34,14 @@ class MusicViewModel : ViewModel() {
     val selectedSong: StateFlow<Song>
         get() = _selectedSong
 
+    private val _nextSong = MutableStateFlow<Song?>(null)
+    val nextSong: StateFlow<Song?>
+        get() = _nextSong
+
+    private val _previousSong = MutableStateFlow<Song?>(null)
+    val previousSong: StateFlow<Song?>
+        get() = _previousSong
+
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String>
         get() = _searchText
@@ -54,8 +62,10 @@ class MusicViewModel : ViewModel() {
         _pageState.value = state
     }
 
-    fun onSongChanged(song: Song) {
+    fun onSongChanged(song: Song, nextSong: Song? = null, previousSong: Song? = null) {
         _selectedSong.value = song
+        _nextSong.value = nextSong
+        _previousSong.value = previousSong
     }
 
     fun setPlaying(value: Boolean) {
@@ -76,4 +86,4 @@ class MusicViewModel : ViewModel() {
 }
 
 enum class UIState { LOADING, LOADED, ERROR, }
-enum class PageState { SONGS, ALBUMS, ARTISTS, GENRES, PLAYLISTS, }
+enum class PageState(var index: Int) { SONGS(0), ALBUMS(1), ARTISTS(2), GENRES(3), PLAYLISTS(4), }

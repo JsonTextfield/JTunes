@@ -106,6 +106,16 @@ class MainActivity : ComponentActivity() {
                         override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
                             super.onShuffleModeEnabledChanged(shuffleModeEnabled)
                             musicViewModel.setShuffling(shuffleModeEnabled)
+                            musicViewModel.onSongChanged(
+                                song = musicLibrary.queue[mediaController?.currentMediaItemIndex
+                                    ?: 0],
+                                nextSong = musicLibrary.queue.getOrNull(
+                                    mediaController?.nextMediaItemIndex ?: -1
+                                ),
+                                previousSong = musicLibrary.queue.getOrNull(
+                                    mediaController?.previousMediaItemIndex ?: -1
+                                ),
+                            )
                         }
 
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -116,7 +126,14 @@ class MainActivity : ComponentActivity() {
                         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                             super.onMediaItemTransition(mediaItem, reason)
                             musicViewModel.onSongChanged(
-                                musicLibrary.queue[mediaController?.currentMediaItemIndex ?: 0]
+                                song = musicLibrary.queue[mediaController?.currentMediaItemIndex
+                                    ?: 0],
+                                nextSong = musicLibrary.queue.getOrNull(
+                                    mediaController?.nextMediaItemIndex ?: -1
+                                ),
+                                previousSong = musicLibrary.queue.getOrNull(
+                                    mediaController?.previousMediaItemIndex ?: -1
+                                ),
                             )
                         }
 
@@ -128,7 +145,8 @@ class MainActivity : ComponentActivity() {
                     mediaController?.let {
                         if (it.mediaItemCount == 0) {
                             loadQueue()
-                        } else {
+                        }
+                        else {
                             val currentSong = musicLibrary.songs.find { song ->
                                 song.title == it.currentMediaItem?.mediaMetadata?.title
                                         && song.artist == it.currentMediaItem?.mediaMetadata?.artist
@@ -141,7 +159,8 @@ class MainActivity : ComponentActivity() {
                 },
                 MoreExecutors.directExecutor()
             )
-        } else {
+        }
+        else {
             musicViewModel.onUIStateChanged(UIState.ERROR)
         }
     }
@@ -149,7 +168,8 @@ class MainActivity : ComponentActivity() {
     private fun requestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissionLauncher.launch(android.Manifest.permission.READ_MEDIA_AUDIO)
-        } else {
+        }
+        else {
             requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
         }
     }
@@ -214,11 +234,17 @@ class MainActivity : ComponentActivity() {
     fun MainPage() {
         val pageState by musicViewModel.pageState.collectAsState()
         val selectedSong by musicViewModel.selectedSong.collectAsState()
+        val previousSong by musicViewModel.previousSong.collectAsState()
+        val nextSong by musicViewModel.nextSong.collectAsState()
         val isPlaying by musicViewModel.isPlaying.collectAsState()
         val isShuffling by musicViewModel.isShuffling.collectAsState()
         val loopMode by musicViewModel.loopMode.collectAsState()
         var showNowPlayingScreen by remember { mutableStateOf(false) }
-        val pagerState = rememberPagerState(pageCount = { PageState.entries.size })
+        val pagerState = rememberPagerState { PageState.entries.size }
+
+        LaunchedEffect(pagerState.currentPage) {
+            musicViewModel.onPageChanged(PageState.entries[pagerState.currentPage])
+        }
 
         val onPlayerButtonPressed: (PlayerButton) -> Unit = { playerButton ->
             when (playerButton) {
@@ -226,7 +252,8 @@ class MainActivity : ComponentActivity() {
                     mediaController?.let {
                         if (it.isPlaying) {
                             it.pause()
-                        } else {
+                        }
+                        else {
                             it.play()
                         }
                     }
@@ -236,7 +263,6 @@ class MainActivity : ComponentActivity() {
                     mediaController?.let {
                         if (it.mediaItemCount > 0) {
                             it.seekToNextMediaItem()
-                            musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
                         }
                     }
                 }
@@ -245,7 +271,14 @@ class MainActivity : ComponentActivity() {
                     mediaController?.let {
                         if (it.mediaItemCount > 0) {
                             it.seekToPrevious()
-                            musicViewModel.onSongChanged(musicLibrary.queue[it.currentMediaItemIndex])
+                        }
+                    }
+                }
+
+                PlayerButton.PREVIOUS_SONG -> {
+                    mediaController?.let {
+                        if (it.mediaItemCount > 0) {
+                            it.seekToPreviousMediaItem()
                         }
                     }
                 }
@@ -318,9 +351,11 @@ class MainActivity : ComponentActivity() {
                                         contentDescription = null,
                                         tint = if (action.isChecked) {
                                             colorResource(R.color.colourAccent)
-                                        } else if (isSystemInDarkTheme()) {
+                                        }
+                                        else if (isSystemInDarkTheme()) {
                                             Color.White
-                                        } else {
+                                        }
+                                        else {
                                             Color.Gray
                                         }
                                     )
@@ -362,8 +397,7 @@ class MainActivity : ComponentActivity() {
                 val searchText by musicViewModel.searchText.collectAsState()
                 HorizontalPager(pagerState) { index ->
                     when (index) {
-                        PageState.SONGS.index -> {
-                            musicViewModel.onPageChanged(PageState.SONGS)
+                        PageState.SONGS.ordinal -> {
                             SongPage(
                                 musicViewModel = musicViewModel,
                                 songs = musicLibrary.songs.filter { song ->
@@ -387,19 +421,30 @@ class MainActivity : ComponentActivity() {
                                     mediaController?.play()
                                 },
                                 onItemClick = { song ->
-                                    musicLibrary.queue = ArrayList(musicLibrary.songs)
-                                    loadQueue()
+                                    if (mediaController?.mediaItemCount == 0 ||
+                                        musicLibrary.queue != ArrayList(musicLibrary.songs)
+                                    ) {
+                                        musicLibrary.queue = ArrayList(musicLibrary.songs)
+                                        loadQueue()
+                                    }
                                     mediaController?.seekToDefaultPosition(
                                         musicLibrary.queue.indexOf(song)
                                     )
                                     mediaController?.play()
-                                    musicViewModel.onSongChanged(song)
+                                    musicViewModel.onSongChanged(
+                                        song = song,
+                                        nextSong = musicLibrary.queue.getOrNull(
+                                            mediaController?.nextMediaItemIndex ?: -1
+                                        ),
+                                        previousSong = musicLibrary.queue.getOrNull(
+                                            mediaController?.previousMediaItemIndex ?: -1
+                                        ),
+                                    )
                                 }
                             )
                         }
 
-                        PageState.ALBUMS.index -> {
-                            musicViewModel.onPageChanged(PageState.ALBUMS)
+                        PageState.ALBUMS.ordinal -> {
                             AlbumPage(
                                 musicViewModel = musicViewModel,
                                 albums = musicLibrary.albums.filter { album ->
@@ -422,8 +467,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        PageState.ARTISTS.index -> {
-                            musicViewModel.onPageChanged(PageState.ARTISTS)
+                        PageState.ARTISTS.ordinal -> {
                             ArtistPage(
                                 musicViewModel = musicViewModel,
                                 artists = musicLibrary.artists.filter { artist ->
@@ -444,8 +488,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        PageState.GENRES.index -> {
-                            musicViewModel.onPageChanged(PageState.GENRES)
+                        PageState.GENRES.ordinal -> {
                             GenrePage(
                                 musicViewModel = musicViewModel,
                                 genres = musicLibrary.genres.filter { genre ->
@@ -466,8 +509,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        PageState.PLAYLISTS.index -> {
-                            musicViewModel.onPageChanged(PageState.PLAYLISTS)
+                        PageState.PLAYLISTS.ordinal -> {
                             PlaylistPage(
                                 musicViewModel = musicViewModel,
                                 playlists = playlists.sortedBy { it.title }.filter { playlist ->
@@ -510,7 +552,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
             NowPlayingLarge(
-                song = selectedSong,
+                currentSong = selectedSong,
+                nextSong = nextSong,
+                previousSong = previousSong,
                 onBackPressed = { showNowPlayingScreen = false },
                 onPlayerButtonPressed = onPlayerButtonPressed,
                 position = progress.toFloat(),

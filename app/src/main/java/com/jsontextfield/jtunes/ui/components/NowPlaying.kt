@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.provider.MediaStore
+import android.util.Log
 import android.util.Size
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -19,12 +20,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.FeaturedPlayList
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -42,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -155,10 +158,12 @@ fun NowPlayingSmall(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun NowPlayingLarge(
-    song: Song,
+    currentSong: Song,
+    nextSong: Song? = null,
+    previousSong: Song? = null,
     position: Float = 0f,
     onBackPressed: () -> Unit = {},
     onPlayerButtonPressed: (PlayerButton) -> Unit = {},
@@ -167,19 +172,53 @@ fun NowPlayingLarge(
     isShuffling: Boolean = true,
     isPlaying: Boolean = true,
 ) {
-    Surface(modifier = Modifier.fillMaxHeight()) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            val context = LocalContext.current
+    val context = LocalContext.current
+    val config = LocalConfiguration.current
+    val songList = listOfNotNull(previousSong, currentSong, nextSong)
+    val pagerState = rememberPagerState(
+        initialPage = if (songList.size > 2 || nextSong == null) 1 else 0,
+        pageCount = { songList.size },
+    )
+    var previousPageIndex by remember { mutableIntStateOf(pagerState.settledPage) }
+
+    LaunchedEffect(currentSong) {
+        //delay(500)
+        Log.e(
+            "CurrentSong",
+            "PREVIOUS: ${previousSong?.title}, CURRENT: ${currentSong.title}, NEXT: ${nextSong?.title}"
+        )
+        if (songList.size == 3) {
+            pagerState.scrollToPage(1)
+        }
+        previousPageIndex = pagerState.settledPage
+    }
+
+    LaunchedEffect(pagerState.settledPage) {
+        Log.e(
+            "SettledPage",
+            "settled page: ${pagerState.settledPage}, previous page: $previousPageIndex"
+        )
+        if (pagerState.settledPage > previousPageIndex) {
+            previousPageIndex = pagerState.settledPage
+            onPlayerButtonPressed(PlayerButton.NEXT)
+        }
+        else if (pagerState.settledPage < previousPageIndex) {
+            previousPageIndex = pagerState.settledPage
+            onPlayerButtonPressed(PlayerButton.PREVIOUS_SONG)
+        }
+    }
+
+    Surface(modifier = Modifier.fillMaxSize()) {
+        // background
+        HorizontalPager(pagerState) { index ->
             var bitmap: Bitmap? by remember { mutableStateOf(null) }
-            LaunchedEffect(song) {
-                bitmap = try {
+            LaunchedEffect(index, currentSong) {
+                songList[index].let { song ->
                     val trackUri = ContentUris.withAppendedId(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                         song.id
                     )
-                    context.contentResolver.loadThumbnail(trackUri, Size(512, 512), null)
-                } catch (e: FileNotFoundException) {
-                    null
+                    bitmap = getCoverArt(context, trackUri)
                 }
             }
             if (bitmap != null) {
@@ -202,67 +241,101 @@ fun NowPlayingLarge(
                         .blur(Dp(blur))
                 )
             }
-            Scaffold(
-                containerColor = Color.Transparent,
-                topBar = {
-                    TopAppBar(
-                        title = {},
-                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                        navigationIcon = {
-                            IconButton(onClick = onBackPressed) {
-                                Icon(
-                                    imageVector = Icons.Rounded.KeyboardArrowDown,
-                                    contentDescription = null
+        }
+        // foreground
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {},
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    navigationIcon = {
+                        IconButton(onClick = onBackPressed) {
+                            Icon(
+                                imageVector = Icons.Rounded.KeyboardArrowDown,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {}) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                )
+            },
+        ) {
+            if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                Row(
+                    modifier = Modifier
+                        .padding(it)
+                        .padding(30.dp)
+                ) {
+                    HorizontalPager(pagerState) { index ->
+                        var bitmap: Bitmap? by remember { mutableStateOf(null) }
+                        LaunchedEffect(index, currentSong) {
+                            songList[index].let { song ->
+                                val trackUri = ContentUris.withAppendedId(
+                                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                                    song.id
                                 )
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = {}) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.FeaturedPlayList,
-                                    contentDescription = null
-                                )
+                                bitmap = getCoverArt(context, trackUri)
                             }
                         }
+                        CoverArt(
+                            bitmap, modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .weight(.3f)
+                        )
+                    }
+                    Column(modifier = Modifier.weight(.9f)) {
+                        SongInfo(currentSong)
+                        PlayerControls(
+                            modifier = Modifier.weight(1f),
+                            currentSong.duration,
+                            position,
+                            onPlayerButtonPressed,
+                            onSeek,
+                            loopMode,
+                            isShuffling,
+                            isPlaying,
+                        )
+                    }
+                }
+            }
+            else {
+                Column(
+                    modifier = Modifier.padding(it)
+                ) {
+                    HorizontalPager(pagerState) { index ->
+                        var bitmap: Bitmap? by remember { mutableStateOf(null) }
+                        LaunchedEffect(index, currentSong) {
+                            songList[index].let { song ->
+                                val trackUri = ContentUris.withAppendedId(
+                                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                                    song.id
+                                )
+                                bitmap = getCoverArt(context, trackUri)
+                            }
+                        }
+                        Box(Modifier.padding(30.dp)) {
+                            CoverArt(bitmap)
+                        }
+                    }
+                    SongInfo(currentSong)
+                    PlayerControls(
+                        modifier = Modifier.weight(1f),
+                        currentSong.duration,
+                        position,
+                        onPlayerButtonPressed,
+                        onSeek,
+                        loopMode,
+                        isShuffling,
+                        isPlaying,
                     )
-                },
-            ) {
-
-                val config = LocalConfiguration.current
-                if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    Row(modifier = Modifier.padding(it).padding(30.dp)) {
-                        CoverArt(bitmap, modifier = Modifier.align(Alignment.CenterVertically).weight(.3f))
-                        Column(modifier = Modifier.weight(.9f)) {
-                            SongInfo(song)
-                            PlayerControls(
-                                modifier = Modifier.weight(1f),
-                                song.duration,
-                                position,
-                                onPlayerButtonPressed,
-                                onSeek,
-                                loopMode,
-                                isShuffling,
-                                isPlaying,
-                            )
-                        }
-                    }
-                } else {
-                    Column(modifier = Modifier.padding(it).padding(30.dp)) {
-                        CoverArt(bitmap, modifier = Modifier.align(Alignment.CenterHorizontally).weight(.3f))
-                        Column(modifier = Modifier.weight(.9f)) {
-                            SongInfo(song)
-                            PlayerControls(
-                                modifier = Modifier.weight(1f),
-                                song.duration,
-                                position,
-                                onPlayerButtonPressed,
-                                onSeek,
-                                loopMode,
-                                isShuffling,
-                                isPlaying,
-                            )
-                        }
-                    }
                 }
             }
         }
