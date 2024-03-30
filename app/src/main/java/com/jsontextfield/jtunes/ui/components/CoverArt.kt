@@ -1,6 +1,9 @@
 package com.jsontextfield.jtunes.ui.components
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
+import android.util.Size
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
+import java.io.FileNotFoundException
 
 @Composable
 fun CoverArt(bitmap: Bitmap?, modifier: Modifier = Modifier) {
@@ -33,7 +37,8 @@ fun CoverArt(bitmap: Bitmap?, modifier: Modifier = Modifier) {
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize()
             )
-        } else {
+        }
+        else {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -67,7 +72,8 @@ fun CoverArtSmall(bitmap: Bitmap?) {
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize()
             )
-        } else {
+        }
+        else {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -82,4 +88,14 @@ fun CoverArtSmall(bitmap: Bitmap?) {
             }
         }
     }
+}
+
+fun getCoverArt(context: Context, uri: Uri): Bitmap? = try {
+    context.contentResolver.loadThumbnail(
+        uri,
+        Size(512, 512),
+        null
+    )
+} catch (e: FileNotFoundException) {
+    null
 }
