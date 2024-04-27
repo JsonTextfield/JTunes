@@ -22,11 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.MusicViewModel
 import com.jsontextfield.jtunes.SongSortMode
+import com.jsontextfield.jtunes.SortSongByArtist
+import com.jsontextfield.jtunes.SortSongByTitle
 import com.jsontextfield.jtunes.entities.Song
 import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.components.SongList
 import com.jsontextfield.jtunes.ui.components.menu.RadioMenuItem
-import java.util.Locale
 
 @Composable
 fun SongPage(
@@ -54,9 +55,9 @@ fun SongPage(
             onCreatePlaylist = onCreatePlaylist
         )
         var showSortMenu by remember { mutableStateOf(false) }
-        var songSortMode by remember { mutableStateOf(SongSortMode.Name) }
+        var songSortMode by remember { mutableStateOf(SongSortMode.Title) }
 
-        Row {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { showSortMenu = true }) {
                 Icon(Icons.AutoMirrored.Rounded.Sort, null)
                 DropdownMenu(
@@ -76,7 +77,10 @@ fun SongPage(
             IconButton(onClick = onShuffleClick) {
                 Icon(Icons.Rounded.Shuffle, null)
             }
-            IconButton(onClick = onQueueClick, enabled = isPlaying) {
+            IconButton(
+                onClick = onQueueClick,
+                enabled = isPlaying,
+            ) {
                 Icon(Icons.AutoMirrored.Rounded.QueueMusic, null)
             }
         }
@@ -84,13 +88,9 @@ fun SongPage(
         SongList(
             songs = songs.filter { song ->
                 song.title.contains(searchText, true)
-            }.sortedBy {
-                if (songSortMode == SongSortMode.Name) {
-                    it.title.lowercase(Locale.getDefault())
-                } else {
-                    it.artist.lowercase(Locale.getDefault())
-                }
-            },
+            }.sortedWith(
+                if (songSortMode == SongSortMode.Title) SortSongByTitle else SortSongByArtist
+            ),
             selectedSong = selectedSong,
             listState = listState,
             modifier = Modifier.weight(1f),
