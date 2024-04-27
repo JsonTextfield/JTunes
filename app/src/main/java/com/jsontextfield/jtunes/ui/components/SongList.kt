@@ -41,13 +41,13 @@ fun SongList(
     selectedSong: Song,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
-    sortMode: SongSortMode = SongSortMode.Name,
-    onSongClicked: (song: Song) -> Unit = {},
+    sortMode: SongSortMode = SongSortMode.Title,
+    onItemClicked: (song: Song) -> Unit = {},
 ) {
     Row {
         SectionIndex(
             data = songs.map { song ->
-                if (sortMode == SongSortMode.Name) song.title
+                if (sortMode == SongSortMode.Title) song.title
                 else song.artist
             },
             listState = listState,
@@ -61,7 +61,7 @@ fun SongList(
                 ListTile(
                     title = song.title,
                     subtitle = song.artist,
-                    onClick = { onSongClicked(song) },
+                    onClick = { onItemClicked(song) },
                     selected = selectedSong == song,
                     leading = {
                         val context = LocalContext.current
