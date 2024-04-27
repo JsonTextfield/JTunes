@@ -1,5 +1,7 @@
 package com.jsontextfield.jtunes.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,
@@ -44,6 +47,6 @@ fun SearchBar(
                 }
             }
         },
-        maxLines = 1, placeholder = { Text(hintText, maxLines = 1) },
+        maxLines = 1, placeholder = { Text(hintText, maxLines = 1, modifier = Modifier.basicMarquee()) },
     )
 }

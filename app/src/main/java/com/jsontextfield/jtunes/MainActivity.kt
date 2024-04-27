@@ -1,10 +1,12 @@
 package com.jsontextfield.jtunes
 
+import android.Manifest
 import android.content.ComponentName
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -12,7 +14,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,14 +29,11 @@ import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,7 +41,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,9 +57,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.common.util.concurrent.MoreExecutors
 import com.jsontextfield.jtunes.entities.Playlist
 import com.jsontextfield.jtunes.entities.Song
+import com.jsontextfield.jtunes.ui.components.MainTopAppBar
 import com.jsontextfield.jtunes.ui.components.NowPlayingLarge
 import com.jsontextfield.jtunes.ui.components.NowPlayingSmall
 import com.jsontextfield.jtunes.ui.components.PlayerButton
@@ -74,7 +74,6 @@ import com.jsontextfield.jtunes.ui.pages.PlaylistPage
 import com.jsontextfield.jtunes.ui.pages.SongPage
 import com.jsontextfield.jtunes.ui.theme.JTunesTheme
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @UnstableApi
 class MainActivity : ComponentActivity() {
@@ -83,109 +82,9 @@ class MainActivity : ComponentActivity() {
     private var mediaController: MediaController? = null
     private val playlists = ArrayList<Playlist>()
 
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            musicLibrary.load(this@MainActivity)
-
-            playlists.add(
-                Playlist(
-                    title = ContextCompat.getString(this@MainActivity, R.string.recently_added),
-                    songs = musicLibrary.recentlyAddedSongs,
-                )
-            )
-            val sessionToken =
-                SessionToken(this, ComponentName(this, MusicPlayerService::class.java))
-            val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
-            controllerFuture.addListener(
-                {
-                    mediaController = controllerFuture.get()
-                    mediaController?.addListener(object : Player.Listener {
-
-                        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-                            super.onShuffleModeEnabledChanged(shuffleModeEnabled)
-                            musicViewModel.setShuffling(shuffleModeEnabled)
-                            musicViewModel.onSongChanged(
-                                song = musicLibrary.queue[mediaController?.currentMediaItemIndex
-                                    ?: 0],
-                                nextSong = musicLibrary.queue.getOrNull(
-                                    mediaController?.nextMediaItemIndex ?: -1
-                                ),
-                                previousSong = musicLibrary.queue.getOrNull(
-                                    mediaController?.previousMediaItemIndex ?: -1
-                                ),
-                            )
-                        }
-
-                        override fun onIsPlayingChanged(isPlaying: Boolean) {
-                            super.onIsPlayingChanged(isPlaying)
-                            musicViewModel.setPlaying(isPlaying)
-                        }
-
-                        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                            super.onMediaItemTransition(mediaItem, reason)
-                            musicViewModel.onSongChanged(
-                                song = musicLibrary.queue[mediaController?.currentMediaItemIndex
-                                    ?: 0],
-                                nextSong = musicLibrary.queue.getOrNull(
-                                    mediaController?.nextMediaItemIndex ?: -1
-                                ),
-                                previousSong = musicLibrary.queue.getOrNull(
-                                    mediaController?.previousMediaItemIndex ?: -1
-                                ),
-                            )
-                        }
-
-                        override fun onRepeatModeChanged(repeatMode: Int) {
-                            super.onRepeatModeChanged(repeatMode)
-                            musicViewModel.onLoopModeChanged(repeatMode)
-                        }
-                    })
-                    mediaController?.let {
-                        if (it.mediaItemCount == 0) {
-                            loadQueue()
-                        }
-                        else {
-                            val currentSong = musicLibrary.songs.find { song ->
-                                song.title == it.currentMediaItem?.mediaMetadata?.title
-                                        && song.artist == it.currentMediaItem?.mediaMetadata?.artist
-                            } ?: Song()
-                            musicViewModel.onSongChanged(currentSong)
-                        }
-                    }
-                    musicViewModel.setPlaying(mediaController?.isPlaying == true)
-                    musicViewModel.onUIStateChanged(UIState.LOADED)
-                },
-                MoreExecutors.directExecutor()
-            )
-        }
-        else {
-            musicViewModel.onUIStateChanged(UIState.ERROR)
-        }
-    }
-
-    private fun requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissionLauncher.launch(android.Manifest.permission.READ_MEDIA_AUDIO)
-        }
-        else {
-            requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        requestPermissions()
-    }
-
-    override fun onResume() {
-        super.onResume()
         if (intent.getBooleanExtra("fromService", false)) {
             musicViewModel.onSongChanged(
                 musicLibrary.queue[intent.getIntExtra("song", 0)]
@@ -194,184 +93,395 @@ class MainActivity : ComponentActivity() {
         loadPage()
     }
 
+    @OptIn(ExperimentalPermissionsApi::class)
     private fun loadPage() {
         setContent {
             JTunesTheme {
+                val permissionState = rememberPermissionState(
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        Manifest.permission.READ_MEDIA_AUDIO
+                    }
+                    else {
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                    }
+                )
+                val requestPermissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    if (isGranted) {
+                        musicLibrary.load(this@MainActivity)
+                        playlists.add(
+                            Playlist(
+                                title = ContextCompat.getString(
+                                    this@MainActivity,
+                                    R.string.recently_added
+                                ),
+                                songs = musicLibrary.recentlyAddedSongs,
+                            )
+                        )
+                        val sessionToken =
+                            SessionToken(this, ComponentName(this, MusicPlayerService::class.java))
+                        val controllerFuture =
+                            MediaController.Builder(this, sessionToken).buildAsync()
+                        controllerFuture.addListener(
+                            {
+                                mediaController = controllerFuture.get()
+                                mediaController?.addListener(object : Player.Listener {
+
+                                    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                                        super.onShuffleModeEnabledChanged(shuffleModeEnabled)
+                                        musicViewModel.setShuffling(shuffleModeEnabled)
+                                        musicViewModel.onSongChanged(
+                                            nextSong = musicLibrary.queue.getOrNull(
+                                                mediaController?.nextMediaItemIndex ?: -1
+                                            ),
+                                            previousSong = musicLibrary.queue.getOrNull(
+                                                mediaController?.previousMediaItemIndex ?: -1
+                                            ),
+                                        )
+                                    }
+
+                                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                                        super.onIsPlayingChanged(isPlaying)
+                                        musicViewModel.setPlaying(isPlaying)
+                                    }
+
+                                    override fun onRepeatModeChanged(repeatMode: Int) {
+                                        super.onRepeatModeChanged(repeatMode)
+                                        musicViewModel.onLoopModeChanged(repeatMode)
+                                    }
+
+                                    override fun onMediaItemTransition(
+                                        mediaItem: MediaItem?,
+                                        reason: Int
+                                    ) {
+                                        super.onMediaItemTransition(mediaItem, reason)
+                                        musicViewModel.onSongChanged(
+                                            song = musicLibrary.queue[mediaController?.currentMediaItemIndex
+                                                ?: 0],
+                                            nextSong = musicLibrary.queue.getOrNull(
+                                                mediaController?.nextMediaItemIndex ?: -1
+                                            ),
+                                            previousSong = musicLibrary.queue.getOrNull(
+                                                mediaController?.previousMediaItemIndex ?: -1
+                                            ),
+                                        )
+                                    }
+                                })
+                                mediaController?.let {
+                                    if (it.mediaItemCount == 0) {
+                                        loadQueue()
+                                    }
+                                    else {
+                                        val currentSong = musicLibrary.songs.find { song ->
+                                            song.title == it.currentMediaItem?.mediaMetadata?.title
+                                                    && song.artist == it.currentMediaItem?.mediaMetadata?.artist
+                                        } ?: Song()
+                                        musicViewModel.onSongChanged(currentSong)
+                                    }
+                                }
+                                musicViewModel.setPlaying(mediaController?.isPlaying == true)
+                                musicViewModel.onUIStateChanged(UIState.LOADED)
+                            },
+                            MoreExecutors.directExecutor()
+                        )
+                    }
+                    else {
+                        musicViewModel.onUIStateChanged(UIState.ERROR)
+                    }
+                }
+                LaunchedEffect(permissionState) {
+                    requestPermissionLauncher.launch(permissionState.permission)
+                }
                 val uiState by musicViewModel.uiState.collectAsState()
+                val pageState by musicViewModel.pageState.collectAsState()
                 when (uiState) {
                     UIState.LOADING -> {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center),
-                                color = colorResource(R.color.colourAccent),
-                            )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
                         }
                     }
 
                     UIState.ERROR -> {
-                        Box(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(
                                 imageVector = Icons.Rounded.Error,
                                 contentDescription = null,
-                                modifier = Modifier
-                                    .size(50.dp)
-                                    .align(Alignment.Center),
-                                tint = Color.White,
+                                modifier = Modifier.size(50.dp),
                             )
                         }
                     }
 
                     UIState.LOADED -> {
-                        MainPage()
+                        val onPlayerButtonPressed: (PlayerButton) -> Unit = { playerButton ->
+                            when (playerButton) {
+                                PlayerButton.PLAY_PAUSE -> {
+                                    mediaController?.let {
+                                        if (it.isPlaying) {
+                                            it.pause()
+                                        }
+                                        else {
+                                            it.play()
+                                        }
+                                    }
+                                }
+
+                                PlayerButton.NEXT -> {
+                                    mediaController?.let {
+                                        if (it.mediaItemCount > 0) {
+                                            it.seekToNextMediaItem()
+                                        }
+                                    }
+                                }
+
+                                PlayerButton.PREVIOUS -> {
+                                    mediaController?.let {
+                                        if (it.mediaItemCount > 0) {
+                                            it.seekToPrevious()
+                                        }
+                                    }
+                                }
+
+                                PlayerButton.PREVIOUS_SONG -> {
+                                    mediaController?.let {
+                                        if (it.mediaItemCount > 0) {
+                                            it.seekToPreviousMediaItem()
+                                        }
+                                    }
+                                }
+
+                                PlayerButton.SHUFFLE -> {
+                                    mediaController?.let {
+                                        it.shuffleModeEnabled = !it.shuffleModeEnabled
+                                    }
+                                }
+
+                                PlayerButton.LOOP -> {
+                                    mediaController?.let {
+                                        it.repeatMode = (it.repeatMode + 2) % 3
+                                    }
+                                }
+                            }
+                        }
+                        val actions: List<Action> = listOf(
+                            Action(
+                                tooltip = stringResource(id = R.string.songs),
+                                icon = Icons.Rounded.MusicNote,
+                                isChecked = pageState == PageState.SONGS,
+                                onClick = { musicViewModel.onPageChanged(PageState.SONGS) },
+                            ),
+                            Action(
+                                tooltip = stringResource(id = R.string.albums),
+                                icon = Icons.Rounded.Album,
+                                isChecked = pageState == PageState.ALBUMS,
+                                onClick = { musicViewModel.onPageChanged(PageState.ALBUMS) },
+                            ),
+                            Action(
+                                tooltip = stringResource(id = R.string.artists),
+                                icon = Icons.Rounded.Person,
+                                isChecked = pageState == PageState.ARTISTS,
+                                onClick = { musicViewModel.onPageChanged(PageState.ARTISTS) },
+                            ),
+                            Action(
+                                tooltip = stringResource(id = R.string.genres),
+                                icon = Icons.Rounded.Brush,
+                                isChecked = pageState == PageState.GENRES,
+                                onClick = { musicViewModel.onPageChanged(PageState.GENRES) },
+                            ),
+                            Action(
+                                tooltip = stringResource(id = R.string.playlists),
+                                icon = Icons.AutoMirrored.Rounded.QueueMusic,
+                                isChecked = pageState == PageState.PLAYLISTS,
+                                onClick = { musicViewModel.onPageChanged(PageState.PLAYLISTS) },
+                            ),
+                        )
+                        MainScreen(
+                            musicViewModel = musicViewModel,
+                            onPlayerAction = onPlayerButtonPressed,
+                            actions = actions,
+                        )
                     }
                 }
             }
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun MainPage() {
+    fun MainContent(musicViewModel: MusicViewModel) {
         val pageState by musicViewModel.pageState.collectAsState()
-        val selectedSong by musicViewModel.selectedSong.collectAsState()
-        val previousSong by musicViewModel.previousSong.collectAsState()
-        val nextSong by musicViewModel.nextSong.collectAsState()
-        val isPlaying by musicViewModel.isPlaying.collectAsState()
-        val isShuffling by musicViewModel.isShuffling.collectAsState()
-        val loopMode by musicViewModel.loopMode.collectAsState()
-        var showNowPlayingScreen by remember { mutableStateOf(false) }
+        val searchText by musicViewModel.searchText.collectAsState()
         val pagerState = rememberPagerState { PageState.entries.size }
 
+        LaunchedEffect(pageState) {
+            pagerState.scrollToPage(pageState.ordinal)
+        }
         LaunchedEffect(pagerState.currentPage) {
             musicViewModel.onPageChanged(PageState.entries[pagerState.currentPage])
         }
-
-        val onPlayerButtonPressed: (PlayerButton) -> Unit = { playerButton ->
-            when (playerButton) {
-                PlayerButton.PLAY_PAUSE -> {
-                    mediaController?.let {
-                        if (it.isPlaying) {
-                            it.pause()
-                        }
-                        else {
-                            it.play()
-                        }
-                    }
-                }
-
-                PlayerButton.NEXT -> {
-                    mediaController?.let {
-                        if (it.mediaItemCount > 0) {
-                            it.seekToNextMediaItem()
-                        }
-                    }
-                }
-
-                PlayerButton.PREVIOUS -> {
-                    mediaController?.let {
-                        if (it.mediaItemCount > 0) {
-                            it.seekToPrevious()
-                        }
-                    }
-                }
-
-                PlayerButton.PREVIOUS_SONG -> {
-                    mediaController?.let {
-                        if (it.mediaItemCount > 0) {
-                            it.seekToPreviousMediaItem()
-                        }
-                    }
-                }
-
-                PlayerButton.SHUFFLE -> {
-                    mediaController?.let {
-                        it.shuffleModeEnabled = !it.shuffleModeEnabled
-                    }
-                }
-
-                PlayerButton.LOOP -> {
-                    mediaController?.let {
-                        it.repeatMode = (it.repeatMode + 2) % 3
-                    }
-                }
-            }
-        }
-        Scaffold(
-            topBar = {
-                Surface(shadowElevation = 10.dp) {
-                    TopAppBar(
-                        title = {},
-                        actions = {
-                            val coroutineScope = rememberCoroutineScope()
-                            val onPageChanged: (PageState) -> Unit = { pageState ->
-                                coroutineScope.launch {
-                                    pagerState.scrollToPage(pageState.index)
-                                    musicViewModel.onPageChanged(pageState)
-                                }
+        HorizontalPager(pagerState) { index ->
+            when (index) {
+                PageState.SONGS.ordinal -> {
+                    SongPage(
+                        musicViewModel = musicViewModel,
+                        songs = musicLibrary.songs.filter { song ->
+                            song.title.contains(searchText, true)
+                        },
+                        hintText = "Search from ${musicLibrary.songs.size} songs",
+                        onCreatePlaylist = {
+                            playlists.add(
+                                Playlist(
+                                    title = musicViewModel.searchText.value,
+                                    songs = musicLibrary.songs.filter { song ->
+                                        song.title.contains(searchText, true)
+                                    },
+                                )
+                            )
+                        },
+                        onShuffleClick = {
+                            mediaController?.shuffleModeEnabled = true
+                            musicLibrary.queue = ArrayList(musicLibrary.songs)
+                            loadQueue()
+                            mediaController?.play()
+                        },
+                        onItemClick = { song ->
+                            if (mediaController?.mediaItemCount == 0 ||
+                                musicLibrary.queue != ArrayList(musicLibrary.songs)
+                            ) {
+                                musicLibrary.queue = ArrayList(musicLibrary.songs)
+                                loadQueue()
                             }
-                            val actions: List<Action> = listOf(
-                                Action(
-                                    tooltip = stringResource(id = R.string.songs),
-                                    icon = Icons.Rounded.MusicNote,
-                                    isChecked = pageState == PageState.SONGS,
-                                    onClick = { onPageChanged(PageState.SONGS) },
+                            mediaController?.seekToDefaultPosition(
+                                musicLibrary.queue.indexOf(song)
+                            )
+                            mediaController?.play()
+                            musicViewModel.onSongChanged(
+                                song = song,
+                                nextSong = musicLibrary.queue.getOrNull(
+                                    mediaController?.nextMediaItemIndex ?: -1
                                 ),
-                                Action(
-                                    tooltip = stringResource(id = R.string.albums),
-                                    icon = Icons.Rounded.Album,
-                                    isChecked = pageState == PageState.ALBUMS,
-                                    onClick = { onPageChanged(PageState.ALBUMS) },
-                                ),
-                                Action(
-                                    tooltip = stringResource(id = R.string.artists),
-                                    icon = Icons.Rounded.Person,
-                                    isChecked = pageState == PageState.ARTISTS,
-                                    onClick = { onPageChanged(PageState.ARTISTS) },
-                                ),
-                                Action(
-                                    tooltip = stringResource(id = R.string.genres),
-                                    icon = Icons.Rounded.Brush,
-                                    isChecked = pageState == PageState.GENRES,
-                                    onClick = { onPageChanged(PageState.GENRES) },
-                                ),
-                                Action(
-                                    tooltip = stringResource(id = R.string.playlists),
-                                    icon = Icons.AutoMirrored.Rounded.QueueMusic,
-                                    isChecked = pageState == PageState.PLAYLISTS,
-                                    onClick = { onPageChanged(PageState.PLAYLISTS) },
+                                previousSong = musicLibrary.queue.getOrNull(
+                                    mediaController?.previousMediaItemIndex ?: -1
                                 ),
                             )
-                            actions.map { action ->
-                                IconButton(
-                                    modifier = Modifier.weight(1f),
-                                    onClick = action.onClick,
-                                ) {
-                                    Icon(
-                                        imageVector = action.icon,
-                                        contentDescription = null,
-                                        tint = if (action.isChecked) {
-                                            colorResource(R.color.colourAccent)
-                                        }
-                                        else if (isSystemInDarkTheme()) {
-                                            Color.White
-                                        }
-                                        else {
-                                            Color.Gray
-                                        }
-                                    )
-                                }
-                            }
+                        }
+                    )
+                }
+
+                PageState.ALBUMS.ordinal -> {
+                    AlbumPage(
+                        musicViewModel = musicViewModel,
+                        albums = musicLibrary.albums.filter { album ->
+                            album.title.contains(searchText, true)
+                        },
+                        hintText = "Search from ${musicLibrary.albums.size} albums",
+                        onItemClick = { album ->
+                            musicLibrary.queue =
+                                ArrayList(musicLibrary.songs
+                                    .filter { song: Song ->
+                                        song.album == album.title
+                                    }.sortedBy { song: Song ->
+                                        song.trackNumber
+                                    }
+                                )
+                            loadQueue()
+                            mediaController?.play()
+                            musicViewModel.onSongChanged(musicLibrary.queue.first())
                         },
                     )
                 }
-            },
+
+                PageState.ARTISTS.ordinal -> {
+                    ArtistPage(
+                        musicViewModel = musicViewModel,
+                        artists = musicLibrary.artists.filter { artist ->
+                            artist.name.contains(searchText, true)
+                        },
+                        hintText = "Search from ${musicLibrary.artists.size} artists",
+                        onItemClick = { artist ->
+                            musicLibrary.queue =
+                                ArrayList(musicLibrary.songs
+                                    .filter { song: Song ->
+                                        song.artist == artist.name
+                                    }
+                                )
+                            loadQueue()
+                            mediaController?.play()
+                            musicViewModel.onSongChanged(musicLibrary.queue.first())
+                        },
+                    )
+                }
+
+                PageState.GENRES.ordinal -> {
+                    GenrePage(
+                        musicViewModel = musicViewModel,
+                        genres = musicLibrary.genres.filter { genre ->
+                            genre.name.contains(searchText, true)
+                        },
+                        hintText = "Search from ${musicLibrary.genres.size} genres",
+                        onItemClick = { genre ->
+                            musicLibrary.queue =
+                                ArrayList(musicLibrary.songs
+                                    .filter { song: Song ->
+                                        song.genre == genre.name
+                                    }
+                                )
+                            loadQueue()
+                            mediaController?.play()
+                            musicViewModel.onSongChanged(musicLibrary.queue.first())
+                        },
+                    )
+                }
+
+                PageState.PLAYLISTS.ordinal -> {
+                    PlaylistPage(
+                        musicViewModel = musicViewModel,
+                        playlists = playlists.sortedBy { it.title }.filter { playlist ->
+                            playlist.title.contains(searchText, true)
+                        },
+                        hintText = "Search from ${
+                            pluralStringResource(
+                                R.plurals.playlists,
+                                playlists.size,
+                                playlists.size
+                            )
+                        }",
+                        onItemClick = { playlist ->
+                            musicLibrary.queue = ArrayList(playlist.songs)
+                            loadQueue()
+                            mediaController?.play()
+                            musicViewModel.onSongChanged(musicLibrary.queue.first())
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun MainScreen(
+        musicViewModel: MusicViewModel,
+        actions: List<Action> = ArrayList(),
+        onPlayerAction: (PlayerButton) -> Unit = {}
+    ) {
+        val pageState by musicViewModel.pageState.collectAsState()
+        val isPlaying by musicViewModel.isPlaying.collectAsState()
+        var showNowPlayingScreen by remember { mutableStateOf(false) }
+
+        Scaffold(
+            topBar = { MainTopAppBar(actions = actions) },
             bottomBar = {
                 Surface(tonalElevation = 2.dp, shadowElevation = 10.dp) {
                     NowPlayingSmall(
-                        song = selectedSong,
-                        onPlayerButtonPressed = onPlayerButtonPressed,
+                        musicViewModel = musicViewModel,
+                        onPlayerAction = onPlayerAction,
                         onClick = { showNowPlayingScreen = true },
-                        isPlaying = isPlaying,
                     )
                 }
             },
@@ -379,6 +489,7 @@ class MainActivity : ComponentActivity() {
                 if (pageState == PageState.PLAYLISTS) {
                     FloatingActionButton(
                         containerColor = colorResource(R.color.colourAccent),
+                        contentColor = Color.White,
                         onClick = {
                             // create new playlist
                         },
@@ -394,144 +505,7 @@ class MainActivity : ComponentActivity() {
                     .padding(paddingValues),
                 color = MaterialTheme.colorScheme.background
             ) {
-                val searchText by musicViewModel.searchText.collectAsState()
-                HorizontalPager(pagerState) { index ->
-                    when (index) {
-                        PageState.SONGS.ordinal -> {
-                            SongPage(
-                                musicViewModel = musicViewModel,
-                                songs = musicLibrary.songs.filter { song ->
-                                    song.title.contains(searchText, true)
-                                },
-                                hintText = "Search from ${musicLibrary.songs.size} songs",
-                                onCreatePlaylist = {
-                                    playlists.add(
-                                        Playlist(
-                                            title = musicViewModel.searchText.value,
-                                            songs = musicLibrary.songs.filter { song ->
-                                                song.title.contains(searchText, true)
-                                            },
-                                        )
-                                    )
-                                },
-                                onShuffleClick = {
-                                    mediaController?.shuffleModeEnabled = true
-                                    musicLibrary.queue = ArrayList(musicLibrary.songs)
-                                    loadQueue()
-                                    mediaController?.play()
-                                },
-                                onItemClick = { song ->
-                                    if (mediaController?.mediaItemCount == 0 ||
-                                        musicLibrary.queue != ArrayList(musicLibrary.songs)
-                                    ) {
-                                        musicLibrary.queue = ArrayList(musicLibrary.songs)
-                                        loadQueue()
-                                    }
-                                    mediaController?.seekToDefaultPosition(
-                                        musicLibrary.queue.indexOf(song)
-                                    )
-                                    mediaController?.play()
-                                    musicViewModel.onSongChanged(
-                                        song = song,
-                                        nextSong = musicLibrary.queue.getOrNull(
-                                            mediaController?.nextMediaItemIndex ?: -1
-                                        ),
-                                        previousSong = musicLibrary.queue.getOrNull(
-                                            mediaController?.previousMediaItemIndex ?: -1
-                                        ),
-                                    )
-                                }
-                            )
-                        }
-
-                        PageState.ALBUMS.ordinal -> {
-                            AlbumPage(
-                                musicViewModel = musicViewModel,
-                                albums = musicLibrary.albums.filter { album ->
-                                    album.title.contains(searchText, true)
-                                },
-                                hintText = "Search from ${musicLibrary.albums.size} albums",
-                                onItemClick = { album ->
-                                    musicLibrary.queue =
-                                        ArrayList(musicLibrary.songs
-                                            .filter { song: Song ->
-                                                song.album == album.title
-                                            }.sortedBy { song: Song ->
-                                                song.trackNumber
-                                            }
-                                        )
-                                    loadQueue()
-                                    mediaController?.play()
-                                    musicViewModel.onSongChanged(musicLibrary.queue.first())
-                                },
-                            )
-                        }
-
-                        PageState.ARTISTS.ordinal -> {
-                            ArtistPage(
-                                musicViewModel = musicViewModel,
-                                artists = musicLibrary.artists.filter { artist ->
-                                    artist.name.contains(searchText, true)
-                                },
-                                hintText = "Search from ${musicLibrary.artists.size} artists",
-                                onItemClick = { artist ->
-                                    musicLibrary.queue =
-                                        ArrayList(musicLibrary.songs
-                                            .filter { song: Song ->
-                                                song.artist == artist.name
-                                            }
-                                        )
-                                    loadQueue()
-                                    mediaController?.play()
-                                    musicViewModel.onSongChanged(musicLibrary.queue.first())
-                                },
-                            )
-                        }
-
-                        PageState.GENRES.ordinal -> {
-                            GenrePage(
-                                musicViewModel = musicViewModel,
-                                genres = musicLibrary.genres.filter { genre ->
-                                    genre.name.contains(searchText, true)
-                                },
-                                hintText = "Search from ${musicLibrary.genres.size} genres",
-                                onItemClick = { genre ->
-                                    musicLibrary.queue =
-                                        ArrayList(musicLibrary.songs
-                                            .filter { song: Song ->
-                                                song.genre == genre.name
-                                            }
-                                        )
-                                    loadQueue()
-                                    mediaController?.play()
-                                    musicViewModel.onSongChanged(musicLibrary.queue.first())
-                                },
-                            )
-                        }
-
-                        PageState.PLAYLISTS.ordinal -> {
-                            PlaylistPage(
-                                musicViewModel = musicViewModel,
-                                playlists = playlists.sortedBy { it.title }.filter { playlist ->
-                                    playlist.title.contains(searchText, true)
-                                },
-                                hintText = "Search from ${
-                                    pluralStringResource(
-                                        R.plurals.playlists,
-                                        playlists.size,
-                                        playlists.size
-                                    )
-                                }",
-                                onItemClick = { playlist ->
-                                    musicLibrary.queue = ArrayList(playlist.songs)
-                                    loadQueue()
-                                    mediaController?.play()
-                                    musicViewModel.onSongChanged(musicLibrary.queue.first())
-                                },
-                            )
-                        }
-                    }
-                }
+                MainContent(musicViewModel = musicViewModel)
             }
         }
         BackHandler(showNowPlayingScreen) {
@@ -542,33 +516,28 @@ class MainActivity : ComponentActivity() {
             enter = slideInVertically { it },
             exit = slideOutVertically { it },
         ) {
-            var progress by remember { mutableLongStateOf(0L) }
-            LaunchedEffect(selectedSong) {
-                mediaController?.let {
-                    while (true) {
+            var progress by remember { mutableLongStateOf(mediaController?.currentPosition ?: 0L) }
+            LaunchedEffect(isPlaying) {
+                while (isPlaying) {
+                    mediaController?.let {
                         progress = it.currentPosition
-                        delay(50)
                     }
+                    delay(100)
                 }
             }
             NowPlayingLarge(
-                currentSong = selectedSong,
-                nextSong = nextSong,
-                previousSong = previousSong,
+                musicViewModel = musicViewModel,
                 onBackPressed = { showNowPlayingScreen = false },
-                onPlayerButtonPressed = onPlayerButtonPressed,
+                onPlayerAction = onPlayerAction,
                 position = progress.toFloat(),
                 onSeek = { mediaController?.seekTo(it.toLong()) },
-                loopMode = loopMode,
-                isPlaying = isPlaying,
-                isShuffling = isShuffling,
             )
         }
     }
 
     private fun loadQueue() {
         mediaController?.setMediaItems(
-            musicLibrary.queue.map { song ->
+            MusicLibrary.getInstance().queue.map { song ->
                 val metadata =
                     MediaMetadata.Builder()
                         .setTitle(song.title)
