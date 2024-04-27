@@ -41,10 +41,10 @@ import kotlinx.coroutines.launch
 import kotlin.math.max
 
 private fun getIndexData(data: List<String>): LinkedHashMap<String, Int> {
-    val dataString = data.map {
-        it.toUpperCase(Locale.current).first()
-    }.sorted().joinToString("")
-
+    val dataString = data
+        .map { it.toUpperCase(Locale.current).first() }
+        .sortedBy { it.isLetterOrDigit() }
+        .joinToString("")
     val letters = Regex("[A-ZÀ-Ö]")
     val numbers = Regex("[0-9]")
     val special = Regex("[^0-9A-ZÀ-Ö]")
@@ -149,9 +149,11 @@ fun SectionIndex(
                         textAlign = TextAlign.Center,
                         color = if (selectedKey == it.first) {
                             selectedColour
-                        } else if (isSystemInDarkTheme()) {
+                        }
+                        else if (isSystemInDarkTheme()) {
                             Color.White
-                        } else {
+                        }
+                        else {
                             Color.Black
                         }
                     )
