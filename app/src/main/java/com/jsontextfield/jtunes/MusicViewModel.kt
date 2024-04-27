@@ -62,7 +62,11 @@ class MusicViewModel : ViewModel() {
         _pageState.value = state
     }
 
-    fun onSongChanged(song: Song, nextSong: Song? = null, previousSong: Song? = null) {
+    fun onSongChanged(
+        song: Song = _selectedSong.value,
+        nextSong: Song? = null,
+        previousSong: Song? = null,
+    ) {
         _selectedSong.value = song
         _nextSong.value = nextSong
         _previousSong.value = previousSong
@@ -86,4 +90,4 @@ class MusicViewModel : ViewModel() {
 }
 
 enum class UIState { LOADING, LOADED, ERROR, }
-enum class PageState(var index: Int) { SONGS(0), ALBUMS(1), ARTISTS(2), GENRES(3), PLAYLISTS(4), }
+enum class PageState { SONGS, ALBUMS, ARTISTS, GENRES, PLAYLISTS, }
