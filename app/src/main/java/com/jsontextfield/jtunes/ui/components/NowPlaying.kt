@@ -19,10 +19,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -42,11 +45,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,20 +65,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.common.Player
+import com.jsontextfield.jtunes.MusicViewModel
 import com.jsontextfield.jtunes.entities.Song
+import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
 import kotlin.math.cos
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NowPlayingSmall(
-    song: Song,
+    musicViewModel: MusicViewModel,
     modifier: Modifier = Modifier,
-    onPlayerButtonPressed: (PlayerButton) -> Unit = {},
+    onPlayerAction: (PlayerButton) -> Unit = {},
     onClick: () -> Unit = {},
-    isPlaying: Boolean = false,
 ) {
+    val song by musicViewModel.selectedSong.collectAsState()
+    val isPlaying by musicViewModel.isPlaying.collectAsState()
     Surface(modifier = modifier.combinedClickable {
         onClick()
     }
@@ -135,19 +142,19 @@ fun NowPlayingSmall(
                 }
                 Row {
                     IconButton(
-                        onClick = { onPlayerButtonPressed(PlayerButton.PREVIOUS) },
+                        onClick = { onPlayerAction(PlayerButton.PREVIOUS) },
                         modifier = Modifier.align(Alignment.CenterVertically)
                     ) {
                         Icon(Icons.Rounded.SkipPrevious, null)
                     }
                     IconButton(
-                        onClick = { onPlayerButtonPressed(PlayerButton.PLAY_PAUSE) },
+                        onClick = { onPlayerAction(PlayerButton.PLAY_PAUSE) },
                         modifier = Modifier.align(Alignment.CenterVertically)
                     ) {
                         Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null)
                     }
                     IconButton(
-                        onClick = { onPlayerButtonPressed(PlayerButton.NEXT) },
+                        onClick = { onPlayerAction(PlayerButton.NEXT) },
                         modifier = Modifier.align(Alignment.CenterVertically)
                     ) {
                         Icon(Icons.Rounded.SkipNext, null)
@@ -161,17 +168,15 @@ fun NowPlayingSmall(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun NowPlayingLarge(
-    currentSong: Song,
-    nextSong: Song? = null,
-    previousSong: Song? = null,
+    musicViewModel: MusicViewModel,
     position: Float = 0f,
     onBackPressed: () -> Unit = {},
-    onPlayerButtonPressed: (PlayerButton) -> Unit = {},
+    onPlayerAction: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
-    loopMode: Int = Player.REPEAT_MODE_OFF,
-    isShuffling: Boolean = true,
-    isPlaying: Boolean = true,
 ) {
+    val previousSong: Song? by musicViewModel.previousSong.collectAsState()
+    val currentSong: Song by musicViewModel.selectedSong.collectAsState()
+    val nextSong: Song? by musicViewModel.nextSong.collectAsState()
     val context = LocalContext.current
     val config = LocalConfiguration.current
     val songList = listOfNotNull(previousSong, currentSong, nextSong)
@@ -200,11 +205,11 @@ fun NowPlayingLarge(
         )
         if (pagerState.settledPage > previousPageIndex) {
             previousPageIndex = pagerState.settledPage
-            onPlayerButtonPressed(PlayerButton.NEXT)
+            onPlayerAction(PlayerButton.NEXT)
         }
         else if (pagerState.settledPage < previousPageIndex) {
             previousPageIndex = pagerState.settledPage
-            onPlayerButtonPressed(PlayerButton.PREVIOUS_SONG)
+            onPlayerAction(PlayerButton.PREVIOUS_SONG)
         }
     }
 
@@ -269,12 +274,8 @@ fun NowPlayingLarge(
             },
         ) {
             if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                Row(
-                    modifier = Modifier
-                        .padding(it)
-                        .padding(30.dp)
-                ) {
-                    HorizontalPager(pagerState) { index ->
+                Row(modifier = Modifier.padding(it)) {
+                    HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { index ->
                         var bitmap: Bitmap? by remember { mutableStateOf(null) }
                         LaunchedEffect(index, currentSong) {
                             songList[index].let { song ->
@@ -285,32 +286,40 @@ fun NowPlayingLarge(
                                 bitmap = getCoverArt(context, trackUri)
                             }
                         }
-                        CoverArt(
-                            bitmap, modifier = Modifier
+                        Box(
+                            Modifier
                                 .align(Alignment.CenterVertically)
-                                .weight(.3f)
-                        )
+                                .padding(30.dp)
+                        ) {
+                            CoverArt(bitmap)
+                        }
                     }
-                    Column(modifier = Modifier.weight(.9f)) {
+                    Column(
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .width(IntrinsicSize.Min)
+                            .weight(2f)
+                    ) {
                         SongInfo(currentSong)
                         PlayerControls(
+                            musicViewModel = musicViewModel,
                             modifier = Modifier.weight(1f),
                             currentSong.duration,
                             position,
-                            onPlayerButtonPressed,
+                            onPlayerAction,
                             onSeek,
-                            loopMode,
-                            isShuffling,
-                            isPlaying,
                         )
                     }
                 }
             }
             else {
                 Column(
-                    modifier = Modifier.padding(it)
+                    modifier = Modifier
+                        .padding(it)
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    HorizontalPager(pagerState) { index ->
+                    HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { index ->
                         var bitmap: Bitmap? by remember { mutableStateOf(null) }
                         LaunchedEffect(index, currentSong) {
                             songList[index].let { song ->
@@ -321,20 +330,34 @@ fun NowPlayingLarge(
                                 bitmap = getCoverArt(context, trackUri)
                             }
                         }
-                        Box(Modifier.padding(30.dp)) {
+                        Box(
+                            Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .fillMaxWidth()
+                                .padding(30.dp)
+                        ) {
                             CoverArt(bitmap)
                         }
                     }
-                    SongInfo(currentSong)
+                    SongInfo(currentSong, modifier = Modifier.height(IntrinsicSize.Min))
+                    val coroutineScope = rememberCoroutineScope()
                     PlayerControls(
-                        modifier = Modifier.weight(1f),
+                        musicViewModel = musicViewModel,
+                        modifier = Modifier.height(IntrinsicSize.Min),
                         currentSong.duration,
                         position,
-                        onPlayerButtonPressed,
+                        onPlayerButtonPressed = {
+                            coroutineScope.launch {
+                                if (it == PlayerButton.PREVIOUS && position < 2000 && pagerState.canScrollBackward) {
+                                    pagerState.animateScrollToPage(pagerState.settledPage - 1)
+                                }
+                                else if (it == PlayerButton.NEXT && pagerState.canScrollForward) {
+                                    pagerState.animateScrollToPage(pagerState.settledPage + 1)
+                                }
+                                onPlayerAction(it)
+                            }
+                        },
                         onSeek,
-                        loopMode,
-                        isShuffling,
-                        isPlaying,
                     )
                 }
             }

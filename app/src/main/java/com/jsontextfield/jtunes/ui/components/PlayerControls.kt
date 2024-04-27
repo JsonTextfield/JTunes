@@ -22,25 +22,26 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
+import com.jsontextfield.jtunes.MusicViewModel
 
 enum class PlayerButton { PLAY_PAUSE, NEXT, PREVIOUS, PREVIOUS_SONG, SHUFFLE, LOOP, }
 
 @Composable
 fun PlayerControls(
+    musicViewModel: MusicViewModel,
     modifier: Modifier = Modifier,
     songDuration: Long = 0L,
     position: Float = 0f,
     onPlayerButtonPressed: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
-    loopMode: Int = Player.REPEAT_MODE_OFF,
-    isShuffling: Boolean = true,
-    isPlaying: Boolean = true,
 ) {
     Column(modifier = modifier) {
         Slider(
@@ -73,6 +74,9 @@ fun PlayerControls(
                 .padding(5.dp)
         )
         Row {
+            val isPlaying by musicViewModel.isPlaying.collectAsState()
+            val isShuffling by musicViewModel.isShuffling.collectAsState()
+            val loopMode by musicViewModel.loopMode.collectAsState()
             IconButton(
                 onClick = { onPlayerButtonPressed(PlayerButton.SHUFFLE) },
                 modifier = Modifier
