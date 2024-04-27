@@ -1,7 +1,7 @@
 package com.jsontextfield.jtunes
 
 import android.content.Context
-import android.provider.MediaStore
+import android.provider.MediaStore.Audio
 import com.jsontextfield.jtunes.entities.Album
 import com.jsontextfield.jtunes.entities.Artist
 import com.jsontextfield.jtunes.entities.Genre
@@ -19,17 +19,17 @@ class MusicLibrary private constructor() {
 
     private fun loadAlbums(context: Context) {
         val projection = arrayOf(
-            MediaStore.Audio.Albums.ALBUM,
-            MediaStore.Audio.Albums.ARTIST,
-            MediaStore.Audio.Albums.FIRST_YEAR,
-            MediaStore.Audio.Albums._ID,
+            Audio.Albums.ALBUM,
+            Audio.Albums.ARTIST,
+            Audio.Albums.FIRST_YEAR,
+            Audio.Albums._ID,
         )
         val cursor = context.contentResolver.query(
-            MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+            Audio.Albums.EXTERNAL_CONTENT_URI,
             projection,
             null,
             null,
-            "LOWER(" + MediaStore.Audio.Albums.ALBUM + ") ASC"
+            "LOWER(" + Audio.Albums.ALBUM + ") ASC"
         )
         albums.clear()
         if (cursor != null) {
@@ -49,23 +49,23 @@ class MusicLibrary private constructor() {
 
     private fun loadSongs(context: Context) {
         val projection = arrayOf(
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.DATA,
-            MediaStore.Audio.Media.DURATION,
-            MediaStore.Audio.Media.YEAR,
-            MediaStore.Audio.Media.DATE_ADDED,
-            MediaStore.Audio.Media.TRACK,
-            MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.GENRE,
+            Audio.Media.TITLE,
+            Audio.Media.ARTIST,
+            Audio.Media.ALBUM,
+            Audio.Media.DATA,
+            Audio.Media.DURATION,
+            Audio.Media.YEAR,
+            Audio.Media.DATE_ADDED,
+            Audio.Media.TRACK,
+            Audio.Media._ID,
+            Audio.Media.GENRE,
         )
         val cursor = context.contentResolver.query(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            Audio.Media.EXTERNAL_CONTENT_URI,
             projection,
-            MediaStore.Audio.Media.DURATION + ">= 5000",
+            Audio.Media.DURATION + " >= 5000 AND " + Audio.Media.IS_MUSIC + " != 0",
             null,
-            "LOWER(" + MediaStore.Audio.Media.TITLE + ") ASC"
+            "LOWER(" + Audio.Media.TITLE + ") ASC"
         )
         if (cursor != null) {
             songs.clear()
@@ -74,7 +74,8 @@ class MusicLibrary private constructor() {
                 var trackNumber = 0
                 if (trackString.length == 4) {
                     trackNumber = trackString.substring(1).toInt()
-                } else if (trackString.isNotEmpty()) {
+                }
+                else if (trackString.isNotEmpty()) {
                     trackNumber = trackString.toInt()
                 }
                 val song =
@@ -98,15 +99,15 @@ class MusicLibrary private constructor() {
 
     private fun loadArtists(context: Context) {
         val projection = arrayOf(
-            MediaStore.Audio.Artists.ARTIST,
-            MediaStore.Audio.Artists._ID,
+            Audio.Artists.ARTIST,
+            Audio.Artists._ID,
         )
         val cursor = context.contentResolver.query(
-            MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
+            Audio.Artists.EXTERNAL_CONTENT_URI,
             projection,
             null,
             null,
-            "LOWER(" + MediaStore.Audio.Artists.ARTIST + ") ASC"
+            "LOWER(" + Audio.Artists.ARTIST + ") ASC"
         )
         artists.clear()
         if (cursor != null) {
@@ -124,15 +125,15 @@ class MusicLibrary private constructor() {
 
     private fun loadGenres(context: Context) {
         val projection = arrayOf(
-            MediaStore.Audio.Genres.NAME,
-            MediaStore.Audio.Genres._ID,
+            Audio.Genres.NAME,
+            Audio.Genres._ID,
         )
         val cursor = context.contentResolver.query(
-            MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
+            Audio.Genres.EXTERNAL_CONTENT_URI,
             projection,
             null,
             null,
-            "LOWER(" + MediaStore.Audio.Genres.NAME + ") ASC"
+            "LOWER(" + Audio.Genres.NAME + ") ASC"
         )
         genres.clear()
         if (cursor != null) {
