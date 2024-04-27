@@ -106,7 +106,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.accompanist:accompanist-insets:0.14.0")
-
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 
     // Optional - Integration with activities
     implementation("androidx.activity:activity-compose:1.8.2")
