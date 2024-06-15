@@ -1,6 +1,5 @@
 package com.jsontextfield.jtunes.ui.components
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -8,7 +7,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,33 +19,31 @@ fun SongInfo(song: Song, modifier: Modifier = Modifier) {
             text = song.title,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            fontSize = 20.sp,
+            fontSize = 16.sp,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
-                //.basicMarquee()
+            //.basicMarquee()
         )
         Text(
             text = song.artist,
-            color = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            fontSize = 16.sp,
+            fontSize = 12.sp,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
-                //.basicMarquee()
+            //.basicMarquee()
         )
         Text(
             text = song.album,
-            color = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            fontSize = 16.sp,
+            fontSize = 12.sp,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
-                //.basicMarquee()
+            //.basicMarquee()
         )
     }
 }

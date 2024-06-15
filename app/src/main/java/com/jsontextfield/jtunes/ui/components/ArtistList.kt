@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,7 +40,6 @@ fun ArtistList(
         SectionIndex(
             data = artists.map { artist -> artist.name },
             listState = listState,
-            selectedColour = colorResource(R.color.colourAccent)
         )
         LazyColumn(
             state = listState,

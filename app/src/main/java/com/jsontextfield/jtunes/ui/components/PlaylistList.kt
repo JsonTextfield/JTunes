@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,7 +27,6 @@ fun PlaylistList(
         SectionIndex(
             data = playlists.map { playlist -> playlist.title },
             listState = listState,
-            selectedColour = colorResource(R.color.colourAccent)
         )
         LazyColumn(
             state = listState,

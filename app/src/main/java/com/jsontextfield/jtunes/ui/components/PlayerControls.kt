@@ -1,6 +1,5 @@
 package com.jsontextfield.jtunes.ui.components
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +17,7 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,9 +49,9 @@ fun PlayerControls(
             onValueChange = onSeek,
             valueRange = 0f..songDuration.toFloat(),
             colors = SliderDefaults.colors(
-                thumbColor = if (isSystemInDarkTheme()) Color.White else Color.DarkGray,
-                activeTrackColor = if (isSystemInDarkTheme()) Color.White else Color.DarkGray,
-                inactiveTrackColor = if (isSystemInDarkTheme()) Color.Gray else Color.LightGray,
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.onSurface,
             )
         )
         val durationMinutes = (songDuration / 1000 / 60).toInt()
@@ -67,7 +66,7 @@ fun PlayerControls(
                 durationMinutes,
                 durationSeconds
             ),
-            fontSize = 16.sp,
+            fontSize = 14.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
