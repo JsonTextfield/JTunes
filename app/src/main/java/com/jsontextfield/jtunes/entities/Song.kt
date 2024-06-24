@@ -15,6 +15,8 @@ data class Song(
     val dateAdded: Long = 1000L,
     val trackNumber: Int = 0,
 ) : Parcelable {
+    var plays = 0
+    var lastPlayed = 0L
     constructor(parcel: Parcel) : this(
         title = parcel.readString() ?: "",
         artist = parcel.readString() ?: "",

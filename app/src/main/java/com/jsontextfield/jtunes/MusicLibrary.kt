@@ -15,7 +15,13 @@ class MusicLibrary private constructor() {
     val genres = ArrayList<Genre>()
 
     val recentlyAddedSongs: List<Song>
-        get() = songs.sortedBy { it.dateAdded }.reversed().take(50)
+        get() = songs.sortedByDescending { it.dateAdded }.take(50)
+
+    val mostPlayedSongs: List<Song>
+        get() = songs.filter { it.plays > 0 }.sortedByDescending { it.plays }.take(50)
+
+    val recentlyPlayedSongs: List<Song>
+        get() = songs.filter { it.lastPlayed > 0 }.sortedByDescending { it.lastPlayed }.take(50)
 
     private fun loadAlbums(context: Context) {
         val projection = arrayOf(
