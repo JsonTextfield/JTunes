@@ -60,7 +60,7 @@ android {
 }
 
 dependencies {
-    val media3Version = "1.3.0"
+    val media3Version = "1.3.1"
 
     // For media playback using ExoPlayer
     implementation("androidx.media3:media3-exoplayer:$media3Version")
