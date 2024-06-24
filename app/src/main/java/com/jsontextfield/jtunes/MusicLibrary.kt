@@ -5,6 +5,7 @@ import android.provider.MediaStore.Audio
 import com.jsontextfield.jtunes.entities.Album
 import com.jsontextfield.jtunes.entities.Artist
 import com.jsontextfield.jtunes.entities.Genre
+import com.jsontextfield.jtunes.entities.Playlist
 import com.jsontextfield.jtunes.entities.Song
 
 class MusicLibrary private constructor() {
@@ -13,6 +14,7 @@ class MusicLibrary private constructor() {
     val albums = ArrayList<Album>()
     val artists = ArrayList<Artist>()
     val genres = ArrayList<Genre>()
+    val playlists = ArrayList<Playlist>()
 
     val recentlyAddedSongs: List<Song>
         get() = songs.sortedByDescending { it.dateAdded }.take(50)
