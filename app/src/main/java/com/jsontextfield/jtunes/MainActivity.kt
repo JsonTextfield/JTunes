@@ -2,8 +2,11 @@ package com.jsontextfield.jtunes
 
 import android.Manifest
 import android.content.ComponentName
+import android.content.ContentUris
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -45,11 +48,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -66,13 +69,14 @@ import com.jsontextfield.jtunes.ui.components.MainTopAppBar
 import com.jsontextfield.jtunes.ui.components.NowPlayingLarge
 import com.jsontextfield.jtunes.ui.components.NowPlayingSmall
 import com.jsontextfield.jtunes.ui.components.PlayerButton
+import com.jsontextfield.jtunes.ui.components.QueueView
 import com.jsontextfield.jtunes.ui.components.menu.Action
 import com.jsontextfield.jtunes.ui.pages.AlbumPage
 import com.jsontextfield.jtunes.ui.pages.ArtistPage
 import com.jsontextfield.jtunes.ui.pages.GenrePage
 import com.jsontextfield.jtunes.ui.pages.PlaylistPage
 import com.jsontextfield.jtunes.ui.pages.SongPage
-import com.jsontextfield.jtunes.ui.theme.JTunesTheme
+import com.jsontextfield.jtunes.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 
 @UnstableApi
@@ -93,10 +97,19 @@ class MainActivity : ComponentActivity() {
         loadPage()
     }
 
+    private fun getSharedPrefs() {
+        val playsPrefs = getSharedPreferences("plays", Context.MODE_PRIVATE)
+        val lastPlayedPrefs = getSharedPreferences("lastPlayed", Context.MODE_PRIVATE)
+        for (song in musicLibrary.songs) {
+            song.plays = playsPrefs.getInt(song.id.toString(), 0)
+            song.lastPlayed = lastPlayedPrefs.getLong(song.id.toString(), 0)
+        }
+    }
+
     @OptIn(ExperimentalPermissionsApi::class)
     private fun loadPage() {
         setContent {
-            JTunesTheme {
+            AppTheme {
                 val permissionState = rememberPermissionState(
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         Manifest.permission.READ_MEDIA_AUDIO
@@ -156,6 +169,33 @@ class MainActivity : ComponentActivity() {
                                         reason: Int
                                     ) {
                                         super.onMediaItemTransition(mediaItem, reason)
+                                        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
+                                            val playsPrefs =
+                                                getSharedPreferences("plays", Context.MODE_PRIVATE)
+                                            playsPrefs.edit {
+                                                val previousMediaItem =
+                                                    mediaController?.getMediaItemAt(
+                                                        mediaController?.previousMediaItemIndex ?: 0
+                                                    )
+                                                val song = musicLibrary.songs.find {
+                                                    it.id.toString() == previousMediaItem?.mediaId
+                                                }
+                                                putInt(
+                                                    previousMediaItem?.mediaId,
+                                                    (song?.plays ?: 0) + 1,
+                                                )
+                                            }
+                                        }
+                                        val lastPlayedPrefs = getSharedPreferences(
+                                            "lastPlayed",
+                                            Context.MODE_PRIVATE,
+                                        )
+                                        lastPlayedPrefs.edit {
+                                            putLong(
+                                                mediaItem?.mediaId,
+                                                System.currentTimeMillis(),
+                                            )
+                                        }
                                         musicViewModel.onSongChanged(
                                             song = musicLibrary.queue[mediaController?.currentMediaItemIndex
                                                 ?: 0],
@@ -169,6 +209,19 @@ class MainActivity : ComponentActivity() {
                                     }
                                 })
                                 mediaController?.let {
+                                    getSharedPrefs()
+                                    playlists.add(
+                                        Playlist(
+                                            title = "Most Played",
+                                            songs = musicLibrary.mostPlayedSongs,
+                                        )
+                                    )
+                                    playlists.add(
+                                        Playlist(
+                                            title = "Recently Played",
+                                            songs = musicLibrary.recentlyPlayedSongs,
+                                        )
+                                    )
                                     if (it.mediaItemCount == 0) {
                                         loadQueue()
                                     }
@@ -473,6 +526,7 @@ class MainActivity : ComponentActivity() {
         val pageState by musicViewModel.pageState.collectAsState()
         val isPlaying by musicViewModel.isPlaying.collectAsState()
         var showNowPlayingScreen by remember { mutableStateOf(false) }
+        var showQueue by remember { mutableStateOf(false) }
 
         Scaffold(
             topBar = { MainTopAppBar(actions = actions) },
@@ -488,7 +542,7 @@ class MainActivity : ComponentActivity() {
             floatingActionButton = {
                 if (pageState == PageState.PLAYLISTS) {
                     FloatingActionButton(
-                        containerColor = colorResource(R.color.colourAccent),
+                        containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White,
                         onClick = {
                             // create new playlist
@@ -511,6 +565,9 @@ class MainActivity : ComponentActivity() {
         BackHandler(showNowPlayingScreen) {
             showNowPlayingScreen = false
         }
+        BackHandler(showQueue) {
+            showQueue = false
+        }
         AnimatedVisibility(
             visible = showNowPlayingScreen,
             enter = slideInVertically { it },
@@ -528,9 +585,35 @@ class MainActivity : ComponentActivity() {
             NowPlayingLarge(
                 musicViewModel = musicViewModel,
                 onBackPressed = { showNowPlayingScreen = false },
+                onQueuePressed = {
+                    showQueue = true
+                },
                 onPlayerAction = onPlayerAction,
                 position = progress.toFloat(),
                 onSeek = { mediaController?.seekTo(it.toLong()) },
+            )
+        }
+
+        AnimatedVisibility(
+            visible = showQueue,
+        ) {
+            val songs = remember { mutableListOf<Song>() }
+            LaunchedEffect(showQueue) {
+                mediaController?.let {
+                    for (i in 0 until it.mediaItemCount) {
+                        val mediaItem = it.getMediaItemAt(i)
+                        musicLibrary.songs.find { song ->
+                            song.title == mediaItem.mediaMetadata.title
+                                    && song.artist == mediaItem.mediaMetadata.artist
+                                    && song.album == mediaItem.mediaMetadata.albumTitle
+                                    && song.genre == mediaItem.mediaMetadata.genre
+                        }?.let { song -> songs.add(song) }
+                    }
+                }
+            }
+            QueueView(
+                songs = songs,
+                onBackPressed = { showQueue = false },
             )
         }
     }
@@ -542,9 +625,19 @@ class MainActivity : ComponentActivity() {
                     MediaMetadata.Builder()
                         .setTitle(song.title)
                         .setArtist(song.artist)
+                        .setAlbumTitle(song.album)
+                        .setAlbumArtist(song.artist)
+                        .setGenre(song.genre)
+                        .setTrackNumber(song.trackNumber)
+                        .setArtworkUri(
+                            ContentUris.withAppendedId(
+                                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                                song.id
+                            )
+                        )
                         .build()
-
                 MediaItem.Builder()
+                    .setMediaId(song.id.toString())
                     .setMediaMetadata(metadata)
                     .setUri(song.path)
                     .build()

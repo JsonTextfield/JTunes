@@ -16,7 +16,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -133,7 +132,6 @@ fun NowPlayingSmall(
                     Text(
                         song.artist,
                         overflow = TextOverflow.Ellipsis,
-                        color = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
                         fontSize = 12.sp,
                         lineHeight = 12.sp,
                         maxLines = 1,
@@ -171,6 +169,7 @@ fun NowPlayingLarge(
     musicViewModel: MusicViewModel,
     position: Float = 0f,
     onBackPressed: () -> Unit = {},
+    onQueuePressed: () -> Unit = {},
     onPlayerAction: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
 ) {
@@ -215,37 +214,33 @@ fun NowPlayingLarge(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         // background
-        HorizontalPager(pagerState) { index ->
-            var bitmap: Bitmap? by remember { mutableStateOf(null) }
-            LaunchedEffect(index, currentSong) {
-                songList[index].let { song ->
-                    val trackUri = ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        song.id
-                    )
-                    bitmap = getCoverArt(context, trackUri)
-                }
-            }
-            if (bitmap != null) {
-                val i by rememberInfiniteTransition().animateFloat(
-                    initialValue = 0f,
-                    targetValue = 2 * Math.PI.toFloat(),
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(8000, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart
-                    )
+        var bitmap: Bitmap? by remember { mutableStateOf(null) }
+        LaunchedEffect(currentSong) {
+            val trackUri = ContentUris.withAppendedId(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                currentSong.id
+            )
+            bitmap = getCoverArt(context, trackUri)
+        }
+        if (bitmap != null) {
+            val i by rememberInfiniteTransition().animateFloat(
+                initialValue = 0f,
+                targetValue = 2 * Math.PI.toFloat(),
+                animationSpec = infiniteRepeatable(
+                    animation = tween(8000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
                 )
-                val blur by remember { derivedStateOf { 15 + 10 * cos(i) } }
-                Image(
-                    bitmap = bitmap!!.asImageBitmap(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    alpha = .4f,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .blur(Dp(blur))
-                )
-            }
+            )
+            val blur by remember { derivedStateOf { 15 + 10 * cos(i) } }
+            Image(
+                bitmap = bitmap!!.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                alpha = .4f,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(Dp(blur))
+            )
         }
         // foreground
         Scaffold(
@@ -263,7 +258,7 @@ fun NowPlayingLarge(
                         }
                     },
                     actions = {
-                        IconButton(onClick = {}) {
+                        IconButton(onClick = onQueuePressed) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
                                 contentDescription = null
