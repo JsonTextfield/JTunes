@@ -35,6 +35,7 @@ fun AlbumPage(
     albums: List<Album> = ArrayList(),
     hintText: String = "",
     onItemClick: (Album) -> Unit = {},
+    onCreatePlaylist: () -> Unit = {},
 ) {
     val searchText by musicViewModel.searchText.collectAsState()
     Column {
@@ -44,9 +45,8 @@ fun AlbumPage(
                 .align(Alignment.CenterHorizontally)
                 .padding(5.dp),
             hintText = hintText,
-            onTextChanged = { text ->
-                musicViewModel.onSearchTextChanged(text)
-            }
+            onTextChanged = { musicViewModel.onSearchTextChanged(it) },
+            onCreatePlaylist = onCreatePlaylist,
         )
 
         var showAsList by remember { mutableStateOf(true) }

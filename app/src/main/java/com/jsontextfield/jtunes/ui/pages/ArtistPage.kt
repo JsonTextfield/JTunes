@@ -20,6 +20,7 @@ fun ArtistPage(
     artists: List<Artist> = ArrayList(),
     hintText: String = "",
     onItemClick: (Artist) -> Unit = {},
+    onCreatePlaylist: () -> Unit = {},
 ) {
     val searchText by musicViewModel.searchText.collectAsState()
     Column {
@@ -29,16 +30,13 @@ fun ArtistPage(
                 .align(Alignment.CenterHorizontally)
                 .padding(5.dp),
             hintText = hintText,
-            onTextChanged = { text ->
-                musicViewModel.onSearchTextChanged(text)
-            }
+            onTextChanged = { musicViewModel.onSearchTextChanged(it) },
+            onCreatePlaylist = onCreatePlaylist,
         )
         val listState = rememberLazyListState()
         ArtistList(
             listState = listState,
-            artists = artists.filter { artist ->
-                artist.name.contains(searchText, true)
-            },
+            artists = artists.filter { it.name.contains(searchText, true) },
             onItemClick = onItemClick,
         )
     }

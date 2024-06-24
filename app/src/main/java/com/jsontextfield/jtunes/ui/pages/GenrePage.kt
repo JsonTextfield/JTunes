@@ -20,6 +20,7 @@ fun GenrePage(
     genres: List<Genre> = ArrayList(),
     hintText: String = "",
     onItemClick: (Genre) -> Unit = {},
+    onCreatePlaylist: () -> Unit = {},
 ) {
     val searchText by musicViewModel.searchText.collectAsState()
     Column {
@@ -29,16 +30,13 @@ fun GenrePage(
                 .align(Alignment.CenterHorizontally)
                 .padding(5.dp),
             hintText = hintText,
-            onTextChanged = { text ->
-                musicViewModel.onSearchTextChanged(text)
-            }
+            onTextChanged = { musicViewModel.onSearchTextChanged(it) },
+            onCreatePlaylist = onCreatePlaylist,
         )
         val listState = rememberLazyListState()
         GenreList(
             listState = listState,
-            genres = genres.filter { genre ->
-                genre.name.contains(searchText, true)
-            },
+            genres = genres.filter { it.name.contains(searchText, true) },
             onItemClick = onItemClick,
         )
     }
