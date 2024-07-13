@@ -15,7 +15,6 @@ import com.jsontextfield.jtunes.ui.pages.SongPage
 import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
 import com.jsontextfield.jtunes.ui.viewmodels.PageState
 
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainContent(musicViewModel: MusicViewModel) {
@@ -34,51 +33,56 @@ fun MainContent(musicViewModel: MusicViewModel) {
         when (index) {
             PageState.SONGS.ordinal -> {
                 SongPage(
-                    musicViewModel = musicViewModel,
+                    musicState = musicState,
                     songs = musicViewModel.getSongs(searchText),
                     hintText = "Search from ${musicViewModel.getSongs().size} songs",
-                    onCreatePlaylist = { musicViewModel.createPlaylistFromSearch() },
-                    onShuffleClick = { musicViewModel.shuffleAndPlay() },
-                    onItemClick = { musicViewModel.playSong(it) }
+                    onCreatePlaylist = musicViewModel::createPlaylistFromSearch,
+                    onShuffleClick = musicViewModel::shuffleAndPlay,
+                    onItemClick = musicViewModel::playSong,
+                    onSearchTextChanged = musicViewModel::onSearchTextChanged,
                 )
             }
 
             PageState.ALBUMS.ordinal -> {
                 AlbumPage(
-                    musicViewModel = musicViewModel,
+                    musicState = musicState,
                     albums = musicViewModel.getAlbums(searchText),
                     hintText = "Search from ${musicViewModel.getAlbums().size} albums",
-                    onItemClick = { musicViewModel.playAlbum(it) },
-                    onCreatePlaylist = { musicViewModel.createPlaylistFromSearch() },
+                    onItemClick = musicViewModel::playAlbum,
+                    onCreatePlaylist = musicViewModel::createPlaylistFromSearch,
+                    onSearchTextChanged = musicViewModel::onSearchTextChanged,
                 )
             }
 
             PageState.ARTISTS.ordinal -> {
                 ArtistPage(
-                    musicViewModel = musicViewModel,
+                    musicState = musicState,
                     artists = musicViewModel.getArtists(searchText),
                     hintText = "Search from ${musicViewModel.getArtists().size} artists",
-                    onItemClick = { musicViewModel.playArtist(it) },
-                    onCreatePlaylist = { musicViewModel.createPlaylistFromSearch() },
+                    onItemClick = musicViewModel::playArtist,
+                    onCreatePlaylist = musicViewModel::createPlaylistFromSearch,
+                    onSearchTextChanged = musicViewModel::onSearchTextChanged,
                 )
             }
 
             PageState.GENRES.ordinal -> {
                 GenrePage(
-                    musicViewModel = musicViewModel,
+                    musicState = musicState,
                     genres = musicViewModel.getGenres(searchText),
                     hintText = "Search from ${musicViewModel.getGenres().size} genres",
-                    onItemClick = { musicViewModel.playGenre(it) },
-                    onCreatePlaylist = { musicViewModel.createPlaylistFromSearch() },
+                    onItemClick = musicViewModel::playGenre,
+                    onCreatePlaylist = musicViewModel::createPlaylistFromSearch,
+                    onSearchTextChanged = musicViewModel::onSearchTextChanged,
                 )
             }
 
             PageState.PLAYLISTS.ordinal -> {
                 PlaylistPage(
-                    musicViewModel = musicViewModel,
+                    musicState = musicState,
                     playlists = musicViewModel.getPlaylists(searchText),
                     hintText = "Search from ${musicViewModel.getPlaylists().size} playlists",
-                    onItemClick = { musicViewModel.playPlaylist(it) },
+                    onItemClick = musicViewModel::playPlaylist,
+                    onSearchTextChanged = musicViewModel::onSearchTextChanged,
                 )
             }
         }

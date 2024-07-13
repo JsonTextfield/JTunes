@@ -12,7 +12,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,24 +19,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.jsontextfield.jtunes.SortAlbumByArtist
-import com.jsontextfield.jtunes.SortAlbumByTitle
 import com.jsontextfield.jtunes.entities.Album
 import com.jsontextfield.jtunes.ui.components.AlbumList
 import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.components.menu.RadioMenuItem
 import com.jsontextfield.jtunes.ui.viewmodels.AlbumSortMode
-import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
+import com.jsontextfield.jtunes.ui.viewmodels.MusicState
 
 @Composable
 fun AlbumPage(
-    musicViewModel: MusicViewModel,
+    musicState: MusicState = MusicState(),
     albums: List<Album> = ArrayList(),
     hintText: String = "",
     onItemClick: (Album) -> Unit = {},
     onCreatePlaylist: () -> Unit = {},
+    onSearchTextChanged: (String) -> Unit = {},
 ) {
-    val musicState by musicViewModel.musicState.collectAsState()
     Column {
         SearchBar(
             value = musicState.searchText,
@@ -45,7 +42,7 @@ fun AlbumPage(
                 .align(Alignment.CenterHorizontally)
                 .padding(5.dp),
             hintText = hintText,
-            onTextChanged = { musicViewModel.onSearchTextChanged(it) },
+            onTextChanged = onSearchTextChanged,
             onCreatePlaylist = onCreatePlaylist,
         )
 
@@ -82,11 +79,7 @@ fun AlbumPage(
             }
         }
         AlbumList(
-            albums = albums.filter { album ->
-                album.title.contains(musicState.searchText, true)
-            }.sortedWith(
-                if (albumSortMode == AlbumSortMode.Title) SortAlbumByTitle else SortAlbumByArtist
-            ),
+            albums = albums,
             listState = listState,
             onItemClick = onItemClick,
             showAsList = showAsList,
