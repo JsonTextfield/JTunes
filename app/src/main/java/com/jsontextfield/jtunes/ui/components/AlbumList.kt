@@ -27,10 +27,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.jsontextfield.jtunes.AlbumSortMode
 import com.jsontextfield.jtunes.MusicLibrary
 import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Album
+import com.jsontextfield.jtunes.ui.viewmodels.AlbumSortMode
 
 @Composable
 fun AlbumList(

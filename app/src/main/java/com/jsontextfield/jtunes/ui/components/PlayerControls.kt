@@ -29,7 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
-import com.jsontextfield.jtunes.MusicViewModel
+import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
 
 enum class PlayerButton { PLAY_PAUSE, NEXT, PREVIOUS, PREVIOUS_SONG, SHUFFLE, LOOP, }
 
@@ -73,9 +73,10 @@ fun PlayerControls(
                 .padding(5.dp)
         )
         Row {
-            val isPlaying by musicViewModel.isPlaying.collectAsState()
-            val isShuffling by musicViewModel.isShuffling.collectAsState()
-            val loopMode by musicViewModel.loopMode.collectAsState()
+            val musicState by musicViewModel.musicState.collectAsState()
+            val isPlaying = musicState.isPlaying
+            val isShuffling = musicState.isShuffling
+            val loopMode = musicState.loopMode
             IconButton(
                 onClick = { onPlayerButtonPressed(PlayerButton.SHUFFLE) },
                 modifier = Modifier

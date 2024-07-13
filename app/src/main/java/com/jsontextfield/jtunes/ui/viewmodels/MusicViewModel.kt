@@ -1,11 +1,10 @@
-package com.jsontextfield.jtunes
+package com.jsontextfield.jtunes.ui.viewmodels
 
 import android.content.ComponentName
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
 import androidx.annotation.OptIn
-import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -18,63 +17,38 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
+import com.jsontextfield.jtunes.MusicLibrary
+import com.jsontextfield.jtunes.MusicPlayerService
+import com.jsontextfield.jtunes.entities.Album
+import com.jsontextfield.jtunes.entities.Artist
+import com.jsontextfield.jtunes.entities.Genre
 import com.jsontextfield.jtunes.entities.Playlist
 import com.jsontextfield.jtunes.entities.Song
+import com.jsontextfield.jtunes.ui.components.PlayerButton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class MusicViewModel(
-    val musicLibrary: MusicLibrary = MusicLibrary.getInstance(),
-    var mediaController: MediaController? = null,
+    private val musicLibrary: MusicLibrary = MusicLibrary.getInstance(),
+    private var mediaController: MediaController? = null,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(UIState.LOADING)
-    val uiState: StateFlow<UIState>
-        get() = _uiState
 
-    private val _pageState = MutableStateFlow(PageState.SONGS)
-    val pageState: StateFlow<PageState>
-        get() = _pageState
+    private val _musicState: MutableStateFlow<MusicState> = MutableStateFlow(MusicState())
+    val musicState: StateFlow<MusicState> get() = _musicState.asStateFlow()
 
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean>
-        get() = _isPlaying
+    private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.LOADING)
+    val uiState: StateFlow<UIState> get() = _uiState.asStateFlow()
 
-    private val _isShuffling = MutableStateFlow(false)
-    val isShuffling: StateFlow<Boolean>
-        get() = _isShuffling
+    private val _pageState: MutableStateFlow<PageState> = MutableStateFlow(PageState.SONGS)
+    val pageState: StateFlow<PageState> get() = _pageState.asStateFlow()
 
-    private val _loopMode = MutableStateFlow(Player.REPEAT_MODE_OFF)
-    val loopMode: StateFlow<Int>
-        get() = _loopMode
-
-    private val _selectedSong = MutableStateFlow(Song())
-    val selectedSong: StateFlow<Song>
-        get() = _selectedSong
-
-    private val _nextSong = MutableStateFlow<Song?>(null)
-    val nextSong: StateFlow<Song?>
-        get() = _nextSong
-
-    private val _previousSong = MutableStateFlow<Song?>(null)
-    val previousSong: StateFlow<Song?>
-        get() = _previousSong
-
-    private val _searchText = MutableStateFlow("")
-    val searchText: StateFlow<String>
-        get() = _searchText
+    val currentPlayerPosition: Long get() = mediaController?.currentPosition ?: 0L
 
     @OptIn(UnstableApi::class)
     fun load(context: Context) {
         musicLibrary.load(context)
-        musicLibrary.playlists.add(
-            Playlist(
-                title = ContextCompat.getString(
-                    context,
-                    R.string.recently_added
-                ),
-                songs = musicLibrary.recentlyAddedSongs,
-            )
-        )
         val sessionToken =
             SessionToken(context, ComponentName(context, MusicPlayerService::class.java))
         val controllerFuture =
@@ -141,8 +115,9 @@ class MusicViewModel(
                             )
                         }
                         onSongChanged(
-                            song = musicLibrary.queue[mediaController?.currentMediaItemIndex
-                                ?: 0],
+                            song = musicLibrary.queue.getOrNull(
+                                mediaController?.currentMediaItemIndex ?: -1
+                            ),
                             nextSong = musicLibrary.queue.getOrNull(
                                 mediaController?.nextMediaItemIndex ?: -1
                             ),
@@ -153,21 +128,8 @@ class MusicViewModel(
                     }
                 })
                 mediaController?.let {
-                    getSharedPrefs(context)
-                    musicLibrary.playlists.add(
-                        Playlist(
-                            title = "Most Played",
-                            songs = musicLibrary.mostPlayedSongs,
-                        )
-                    )
-                    musicLibrary.playlists.add(
-                        Playlist(
-                            title = "Recently Played",
-                            songs = musicLibrary.recentlyPlayedSongs,
-                        )
-                    )
                     if (it.mediaItemCount == 0) {
-                        loadQueue()
+                        loadQueue(getSongs())
                     }
                     else {
                         val currentSong = musicLibrary.songs.find { song ->
@@ -184,18 +146,72 @@ class MusicViewModel(
         )
     }
 
-    private fun getSharedPrefs(context: Context) {
-        val playsPrefs = context.getSharedPreferences("plays", Context.MODE_PRIVATE)
-        val lastPlayedPrefs = context.getSharedPreferences("lastPlayed", Context.MODE_PRIVATE)
-        for (song in musicLibrary.songs) {
-            song.plays = playsPrefs.getInt(song.id.toString(), 0)
-            song.lastPlayed = lastPlayedPrefs.getLong(song.id.toString(), 0)
+    fun playPause() {
+        mediaController?.let {
+            if (it.isPlaying) {
+                it.pause()
+            }
+            else {
+                it.play()
+            }
         }
     }
 
-    fun loadQueue() {
+    fun next() {
+        mediaController?.let {
+            if (it.mediaItemCount > 0) {
+                it.seekToNextMediaItem()
+            }
+        }
+    }
+
+    fun previous() {
+        mediaController?.let {
+            if (it.mediaItemCount > 0) {
+                it.seekToPrevious()
+            }
+        }
+    }
+
+    fun previousSong() {
+        mediaController?.let {
+            if (it.mediaItemCount > 0) {
+                it.seekToPreviousMediaItem()
+            }
+        }
+    }
+
+    fun loop() {
+        mediaController?.let {
+            it.repeatMode = (it.repeatMode + 2) % 3
+        }
+    }
+
+    fun seekTo(position: Long) {
+        mediaController?.seekTo(position)
+    }
+
+    fun getQueueSongs(): List<Song> {
+        val songs = ArrayList<Song>()
+        mediaController?.let {
+            for (i in 0 until it.mediaItemCount) {
+                val mediaItem = it.getMediaItemAt(i)
+                musicLibrary.songs.find { song ->
+                    song.title == mediaItem.mediaMetadata.title
+                            && song.artist == mediaItem.mediaMetadata.artist
+                            && song.album == mediaItem.mediaMetadata.albumTitle
+                            && song.genre == mediaItem.mediaMetadata.genre
+                }?.let { song -> songs.add(song) }
+            }
+        }
+        return songs
+    }
+
+    private fun loadQueue(songs: List<Song>) {
+        musicLibrary.queue.clear()
+        musicLibrary.queue.addAll(songs)
         mediaController?.setMediaItems(
-            MusicLibrary.getInstance().queue.map { song ->
+            musicLibrary.queue.map { song ->
                 val metadata =
                     MediaMetadata.Builder()
                         .setTitle(song.title)
@@ -221,44 +237,160 @@ class MusicViewModel(
         mediaController?.prepare()
     }
 
+    fun getSongs(searchText: String = "", selector: (Song) -> String = { it.title }): List<Song> {
+        return musicLibrary.songs.filter {
+            selector(it).contains(searchText, true)
+        }
+    }
+
+    fun getAlbums(searchText: String = ""): List<Album> {
+        return musicLibrary.albums.filter { album ->
+            album.title.contains(searchText, true)
+        }
+    }
+
+    fun getArtists(searchText: String = ""): List<Artist> {
+        return musicLibrary.artists.filter { artist ->
+            artist.name.contains(searchText, true)
+        }
+    }
+
+    fun getGenres(searchText: String = ""): List<Genre> {
+        return musicLibrary.genres.filter { genre ->
+            genre.name.contains(searchText, true)
+        }
+    }
+
+    fun getPlaylists(searchText: String = ""): List<Playlist> {
+        return musicLibrary.playlists.sortedBy { it.title }
+            .filter { playlist ->
+                playlist.title.contains(searchText, true)
+            }
+    }
+
     fun setShuffling(value: Boolean) {
-        _isShuffling.value = value
+        _musicState.update {
+            it.copy(isShuffling = value)
+        }
+        mediaController?.shuffleModeEnabled = value
     }
 
     fun onLoopModeChanged(mode: Int) {
-        _loopMode.value = mode
+        _musicState.update {
+            it.copy(loopMode = mode)
+        }
     }
 
     fun onSearchTextChanged(text: String) {
-        _searchText.value = text
+        _musicState.update {
+            it.copy(searchText = text)
+        }
     }
 
     fun onPageChanged(state: PageState) {
         _pageState.value = state
     }
 
+    fun onSongChanged(index: Int) {
+        onSongChanged(musicLibrary.queue[index])
+    }
+
     fun onSongChanged(
-        song: Song = _selectedSong.value,
+        song: Song? = musicState.value.currentSong,
         nextSong: Song? = null,
         previousSong: Song? = null,
     ) {
-        _selectedSong.value = song
-        _nextSong.value = nextSong
-        _previousSong.value = previousSong
+        _musicState.update {
+            it.copy(
+                currentSong = song,
+                nextSong = nextSong,
+                previousSong = previousSong,
+            )
+        }
     }
 
     fun setPlaying(value: Boolean) {
-        _isPlaying.value = value
+        _musicState.update {
+            it.copy(isPlaying = value)
+        }
     }
 
     fun onUIStateChanged(newUIState: UIState) {
         _uiState.value = newUIState
     }
 
+    fun onPlayerAction(playerButton: PlayerButton) {
+        when (playerButton) {
+            PlayerButton.PLAY_PAUSE -> playPause()
+            PlayerButton.NEXT -> next()
+            PlayerButton.PREVIOUS -> previous()
+            PlayerButton.PREVIOUS_SONG -> previousSong()
+            PlayerButton.SHUFFLE -> setShuffling(!musicState.value.isShuffling)
+            PlayerButton.LOOP -> loop()
+        }
+    }
+
+    fun shuffleAndPlay() {
+        setShuffling(true)
+        loadQueue(getSongs())
+        playPause()
+    }
+
+    fun playSong(song: Song) {
+        loadQueue(getSongs())
+        onSongChanged(song)
+        mediaController?.seekToDefaultPosition(musicLibrary.queue.indexOf(song))
+        playPause()
+    }
+
+    fun playGenre(genre: Genre) {
+        val songs = musicLibrary.songs.filter { song ->
+            song.genre == genre.name
+        }
+        loadQueue(songs)
+        playPause()
+    }
+
+    fun playArtist(artist: Artist) {
+        val songs = musicLibrary.songs.filter { song ->
+            song.artist == artist.name
+        }
+        loadQueue(songs)
+        playPause()
+    }
+
+    fun playAlbum(album: Album) {
+        val songs = musicLibrary.songs.filter { song ->
+            song.album == album.title
+        }
+        loadQueue(songs)
+        playPause()
+    }
+
+    fun playPlaylist(playlist: Playlist) {
+        loadQueue(playlist.songs)
+        playPause()
+    }
+
+    fun createPlaylistFromSearch() {
+        val searchText = musicState.value.searchText
+        musicLibrary.playlists.add(
+            Playlist(
+                title = searchText,
+                songs = when (_pageState.value) {
+                    PageState.SONGS -> getSongs(searchText)
+                    PageState.ALBUMS -> getSongs(searchText) { it.album }
+                    PageState.ARTISTS -> getSongs(searchText) { it.artist }
+                    PageState.GENRES -> getSongs(searchText) { it.genre }
+                    PageState.PLAYLISTS -> emptyList()
+                },
+            ),
+        )
+    }
+
     companion object {
         val MusicViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-
                 MusicViewModel()
             }
         }

@@ -7,21 +7,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.jsontextfield.jtunes.MusicViewModel
-import com.jsontextfield.jtunes.PageState
 import com.jsontextfield.jtunes.ui.pages.AlbumPage
 import com.jsontextfield.jtunes.ui.pages.ArtistPage
 import com.jsontextfield.jtunes.ui.pages.GenrePage
 import com.jsontextfield.jtunes.ui.pages.PlaylistPage
 import com.jsontextfield.jtunes.ui.pages.SongPage
+import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
+import com.jsontextfield.jtunes.ui.viewmodels.PageState
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainContent(musicViewModel: MusicViewModel) {
     val pageState by musicViewModel.pageState.collectAsState()
-    val searchText by musicViewModel.searchText.collectAsState()
+    val musicState by musicViewModel.musicState.collectAsState()
     val pagerState = rememberPagerState { PageState.entries.size }
+    val searchText = musicState.searchText
 
     LaunchedEffect(pageState) {
         pagerState.scrollToPage(pageState.ordinal)

@@ -9,10 +9,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.jsontextfield.jtunes.MusicViewModel
 import com.jsontextfield.jtunes.entities.Playlist
 import com.jsontextfield.jtunes.ui.components.PlaylistList
 import com.jsontextfield.jtunes.ui.components.SearchBar
+import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
 
 @Composable
 fun PlaylistPage(
@@ -21,10 +21,10 @@ fun PlaylistPage(
     hintText: String = "",
     onItemClick: (Playlist) -> Unit = {},
 ) {
-    val searchText by musicViewModel.searchText.collectAsState()
+    val musicState by musicViewModel.musicState.collectAsState()
     Column {
         SearchBar(
-            value = searchText,
+            value = musicState.searchText,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(5.dp),
@@ -37,7 +37,7 @@ fun PlaylistPage(
         PlaylistList(
             listState = listState,
             playlists = playlists.sortedBy { it.title }.filter { playlist ->
-                playlist.title.contains(searchText, true)
+                playlist.title.contains(musicState.searchText, true)
             },
             onItemClick = onItemClick,
         )

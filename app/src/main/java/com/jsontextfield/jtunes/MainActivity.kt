@@ -19,6 +19,8 @@ import com.jsontextfield.jtunes.ui.components.ErrorScreen
 import com.jsontextfield.jtunes.ui.components.LoadingScreen
 import com.jsontextfield.jtunes.ui.components.MainScreen
 import com.jsontextfield.jtunes.ui.theme.AppTheme
+import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
+import com.jsontextfield.jtunes.ui.viewmodels.UIState
 
 @UnstableApi
 class MainActivity : ComponentActivity() {

@@ -31,14 +31,14 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.R
-import com.jsontextfield.jtunes.SongSortMode
 import com.jsontextfield.jtunes.entities.Song
+import com.jsontextfield.jtunes.ui.viewmodels.SongSortMode
 import java.io.FileNotFoundException
 
 @Composable
 fun SongList(
     songs: List<Song>,
-    selectedSong: Song,
+    selectedSong: Song?,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     sortMode: SongSortMode = SongSortMode.Title,
