@@ -31,9 +31,7 @@ class MainActivity : ComponentActivity() {
 
         val musicViewModel by viewModels<MusicViewModel> { MusicViewModel.MusicViewModelFactory }
         if (intent.getBooleanExtra("fromService", false)) {
-            musicViewModel.onSongChanged(
-                musicViewModel.musicLibrary.queue[intent.getIntExtra("song", 0)]
-            )
+            musicViewModel.onSongChanged(intent.getIntExtra("song", 0))
         }
         setContent {
             AppTheme {
@@ -63,17 +61,9 @@ class MainActivity : ComponentActivity() {
 
                 val uiState by musicViewModel.uiState.collectAsState()
                 when (uiState) {
-                    UIState.LOADING -> {
-                        LoadingScreen()
-                    }
-
-                    UIState.ERROR -> {
-                        ErrorScreen()
-                    }
-
-                    UIState.LOADED -> {
-                        MainScreen(musicViewModel)
-                    }
+                    UIState.LOADING -> LoadingScreen()
+                    UIState.ERROR -> ErrorScreen()
+                    UIState.LOADED -> MainScreen(musicViewModel)
                 }
             }
         }
