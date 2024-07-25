@@ -33,9 +33,9 @@ import kotlinx.coroutines.flow.update
 class MusicViewModel(
     private val musicLibrary: MusicLibrary = MusicLibrary.getInstance(),
     private var mediaController: MediaController? = null,
+    private val _musicState: MutableStateFlow<MusicState> = MutableStateFlow(MusicState()),
 ) : ViewModel() {
 
-    private val _musicState: MutableStateFlow<MusicState> = MutableStateFlow(MusicState())
     val musicState: StateFlow<MusicState> get() = _musicState.asStateFlow()
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.LOADING)
@@ -49,10 +49,11 @@ class MusicViewModel(
     @OptIn(UnstableApi::class)
     fun load(context: Context) {
         musicLibrary.load(context)
-        val sessionToken =
-            SessionToken(context, ComponentName(context, MusicPlayerService::class.java))
-        val controllerFuture =
-            MediaController.Builder(context, sessionToken).buildAsync()
+        val sessionToken = SessionToken(
+            context,
+            ComponentName(context, MusicPlayerService::class.java),
+        )
+        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
 
         controllerFuture.addListener(
             {
@@ -88,8 +89,10 @@ class MusicViewModel(
                     ) {
                         super.onMediaItemTransition(mediaItem, reason)
                         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
-                            val playsPrefs =
-                                context.getSharedPreferences("plays", Context.MODE_PRIVATE)
+                            val playsPrefs = context.getSharedPreferences(
+                                "plays",
+                                Context.MODE_PRIVATE,
+                            )
                             playsPrefs.edit {
                                 val previousMediaItem =
                                     mediaController?.getMediaItemAt(
@@ -98,10 +101,7 @@ class MusicViewModel(
                                 val song = musicLibrary.songs.find {
                                     it.id.toString() == previousMediaItem?.mediaId
                                 }
-                                putInt(
-                                    previousMediaItem?.mediaId,
-                                    (song?.plays ?: 0) + 1,
-                                )
+                                putInt(previousMediaItem?.mediaId, (song?.plays ?: 0) + 1)
                             }
                         }
                         val lastPlayedPrefs = context.getSharedPreferences(
@@ -109,10 +109,7 @@ class MusicViewModel(
                             Context.MODE_PRIVATE,
                         )
                         lastPlayedPrefs.edit {
-                            putLong(
-                                mediaItem?.mediaId,
-                                System.currentTimeMillis(),
-                            )
+                            putLong(mediaItem?.mediaId, System.currentTimeMillis())
                         }
                         onSongChanged(
                             song = musicLibrary.queue.getOrNull(
@@ -146,7 +143,7 @@ class MusicViewModel(
         )
     }
 
-    fun playPause() {
+    private fun playPause() {
         mediaController?.let {
             if (it.isPlaying) {
                 it.pause()
@@ -165,7 +162,7 @@ class MusicViewModel(
         }
     }
 
-    fun previous() {
+    private fun previous() {
         mediaController?.let {
             if (it.mediaItemCount > 0) {
                 it.seekToPrevious()
@@ -173,7 +170,7 @@ class MusicViewModel(
         }
     }
 
-    fun previousSong() {
+    private fun previousSong() {
         mediaController?.let {
             if (it.mediaItemCount > 0) {
                 it.seekToPreviousMediaItem()
@@ -181,7 +178,7 @@ class MusicViewModel(
         }
     }
 
-    fun loop() {
+    private fun loop() {
         mediaController?.let {
             it.repeatMode = (it.repeatMode + 2) % 3
         }
