@@ -305,7 +305,7 @@ fun NowPlayingLarge(
                                 modifier = Modifier.weight(1f),
                                 song.duration,
                                 position,
-                                { action -> musicViewModel.onPlayerAction(action) },
+                                musicViewModel::onPlayerAction,
                                 onSeek,
                             )
                         }
