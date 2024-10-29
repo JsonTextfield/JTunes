@@ -7,11 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.jsontextfield.jtunes.ui.pages.AlbumPage
-import com.jsontextfield.jtunes.ui.pages.ArtistPage
-import com.jsontextfield.jtunes.ui.pages.GenrePage
-import com.jsontextfield.jtunes.ui.pages.PlaylistPage
-import com.jsontextfield.jtunes.ui.pages.SongPage
+import com.jsontextfield.jtunes.ui.albums.AlbumPage
+import com.jsontextfield.jtunes.ui.artists.ArtistPage
+import com.jsontextfield.jtunes.ui.genres.GenrePage
+import com.jsontextfield.jtunes.ui.playlists.PlaylistPage
+import com.jsontextfield.jtunes.ui.songs.SongPage
 import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
 import com.jsontextfield.jtunes.ui.viewmodels.PageState
 
