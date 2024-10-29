@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.components
+package com.jsontextfield.jtunes.ui.songs
 
 import android.content.ContentUris
 import android.graphics.Bitmap
@@ -32,14 +32,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Song
+import com.jsontextfield.jtunes.ui.components.CoverArtSmall
+import com.jsontextfield.jtunes.ui.components.ListTile
+import com.jsontextfield.jtunes.ui.components.SectionIndex
 import com.jsontextfield.jtunes.ui.viewmodels.SongSortMode
 import java.io.FileNotFoundException
 
 @Composable
 fun SongList(
-    songs: List<Song>,
-    selectedSong: Song?,
     modifier: Modifier = Modifier,
+    songs: List<Song> = emptyList(),
+    selectedSong: Song? = null,
     listState: LazyListState = rememberLazyListState(),
     sortMode: SongSortMode = SongSortMode.Title,
     onItemClicked: (song: Song) -> Unit = {},
@@ -57,7 +60,7 @@ fun SongList(
             state = listState,
             modifier = modifier,
         ) {
-            items(songs, { it.hashCode() }) { song ->
+            items(songs) { song ->
                 ListTile(
                     title = song.title,
                     subtitle = song.artist,

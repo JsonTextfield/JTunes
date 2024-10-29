@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.pages
+package com.jsontextfield.jtunes.ui.playlists
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -7,18 +7,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.jsontextfield.jtunes.entities.Artist
-import com.jsontextfield.jtunes.ui.components.ArtistList
+import com.jsontextfield.jtunes.entities.Playlist
 import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.viewmodels.MusicState
 
 @Composable
-fun ArtistPage(
+fun PlaylistPage(
     musicState: MusicState = MusicState(),
-    artists: List<Artist> = ArrayList(),
+    playlists: List<Playlist> = ArrayList(),
     hintText: String = "",
-    onItemClick: (Artist) -> Unit = {},
-    onCreatePlaylist: () -> Unit = {},
+    onItemClick: (Playlist) -> Unit = {},
     onSearchTextChanged: (String) -> Unit = {},
 ) {
     Column {
@@ -28,13 +26,12 @@ fun ArtistPage(
                 .align(Alignment.CenterHorizontally)
                 .padding(5.dp),
             hintText = hintText,
-            onTextChanged = onSearchTextChanged,
-            onCreatePlaylist = onCreatePlaylist,
+            onTextChanged = onSearchTextChanged
         )
         val listState = rememberLazyListState()
-        ArtistList(
+        PlaylistList(
             listState = listState,
-            artists = artists,
+            playlists = playlists,
             onItemClick = onItemClick,
         )
     }

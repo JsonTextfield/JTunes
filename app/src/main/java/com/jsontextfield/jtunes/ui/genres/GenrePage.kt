@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.pages
+package com.jsontextfield.jtunes.ui.genres
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.entities.Genre
-import com.jsontextfield.jtunes.ui.components.GenreList
 import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.viewmodels.MusicState
 

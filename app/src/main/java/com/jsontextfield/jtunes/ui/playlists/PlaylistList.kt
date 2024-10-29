@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.components
+package com.jsontextfield.jtunes.ui.playlists
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +15,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Playlist
+import com.jsontextfield.jtunes.ui.components.ListTile
+import com.jsontextfield.jtunes.ui.components.SectionIndex
 
 @Composable
 fun PlaylistList(

@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.components
+package com.jsontextfield.jtunes.ui.albums
 
 import android.content.ContentUris
 import android.graphics.Bitmap
@@ -30,6 +30,11 @@ import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.MusicLibrary
 import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Album
+import com.jsontextfield.jtunes.ui.components.CoverArtSmall
+import com.jsontextfield.jtunes.ui.components.GalleryTile
+import com.jsontextfield.jtunes.ui.components.ListTile
+import com.jsontextfield.jtunes.ui.components.SectionIndex
+import com.jsontextfield.jtunes.ui.components.getCoverArt
 import com.jsontextfield.jtunes.ui.viewmodels.AlbumSortMode
 
 @Composable

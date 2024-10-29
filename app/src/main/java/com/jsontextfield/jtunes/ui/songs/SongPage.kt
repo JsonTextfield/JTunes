@@ -1,13 +1,13 @@
-package com.jsontextfield.jtunes.ui.pages
+package com.jsontextfield.jtunes.ui.songs
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,71 +19,74 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.jsontextfield.jtunes.entities.Album
-import com.jsontextfield.jtunes.ui.components.AlbumList
+import com.jsontextfield.jtunes.entities.Song
 import com.jsontextfield.jtunes.ui.components.SearchBar
 import com.jsontextfield.jtunes.ui.components.menu.RadioMenuItem
-import com.jsontextfield.jtunes.ui.viewmodels.AlbumSortMode
 import com.jsontextfield.jtunes.ui.viewmodels.MusicState
+import com.jsontextfield.jtunes.ui.viewmodels.SongSortMode
 
 @Composable
-fun AlbumPage(
+fun SongPage(
     musicState: MusicState = MusicState(),
-    albums: List<Album> = ArrayList(),
+    songs: List<Song> = emptyList(),
     hintText: String = "",
-    onItemClick: (Album) -> Unit = {},
+    onItemClick: (song: Song) -> Unit = {},
     onCreatePlaylist: () -> Unit = {},
+    onShuffleClick: () -> Unit = {},
+    onQueueClick: () -> Unit = {},
     onSearchTextChanged: (String) -> Unit = {},
 ) {
     Column {
+        val searchText = musicState.searchText
+        val isPlaying = musicState.isPlaying
+        val selectedSong = musicState.currentSong
         SearchBar(
-            value = musicState.searchText,
+            value = searchText,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(5.dp),
             hintText = hintText,
             onTextChanged = onSearchTextChanged,
-            onCreatePlaylist = onCreatePlaylist,
+            onCreatePlaylist = onCreatePlaylist
         )
-
-        var showAsList by remember { mutableStateOf(true) }
         var showSortMenu by remember { mutableStateOf(false) }
-        var albumSortMode by remember { mutableStateOf(AlbumSortMode.Title) }
-        val listState = rememberLazyListState()
+        var songSortMode by remember { mutableStateOf(SongSortMode.Title) }
 
-        Row {
-            IconButton(onClick = { showAsList = !showAsList }) {
-                Icon(
-                    if (showAsList) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.List,
-                    null,
-                )
-            }
-
-            IconButton(
-                onClick = { showSortMenu = true },
-            ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { showSortMenu = true }) {
                 Icon(Icons.AutoMirrored.Rounded.Sort, null)
                 DropdownMenu(
                     expanded = showSortMenu,
                     onDismissRequest = { showSortMenu = false }) {
-                    AlbumSortMode.entries.map {
+                    SongSortMode.entries.map {
                         RadioMenuItem(
                             title = it.name,
-                            selected = it == albumSortMode
+                            selected = it == songSortMode
                         ) {
-                            albumSortMode = it
+                            songSortMode = it
                             showSortMenu = false
                         }
                     }
                 }
             }
+            IconButton(onClick = onShuffleClick) {
+                Icon(Icons.Rounded.Shuffle, null)
+            }
+            IconButton(
+                onClick = onQueueClick,
+                enabled = isPlaying,
+            ) {
+                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null)
+            }
         }
-        AlbumList(
-            albums = albums,
+        val listState = rememberLazyListState()
+        SongList(
+            songs = songs,
+            selectedSong = selectedSong,
             listState = listState,
-            onItemClick = onItemClick,
-            showAsList = showAsList,
-            sortMode = albumSortMode,
+            modifier = Modifier.weight(1f),
+            sortMode = songSortMode,
+            onItemClicked = onItemClick,
         )
     }
 }

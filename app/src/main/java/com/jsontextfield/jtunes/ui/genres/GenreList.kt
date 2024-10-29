@@ -1,4 +1,4 @@
-package com.jsontextfield.jtunes.ui.components
+package com.jsontextfield.jtunes.ui.genres
 
 import android.content.ContentUris
 import android.graphics.Bitmap
@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.jsontextfield.jtunes.MusicLibrary
 import com.jsontextfield.jtunes.R
 import com.jsontextfield.jtunes.entities.Genre
+import com.jsontextfield.jtunes.ui.components.ListTile
+import com.jsontextfield.jtunes.ui.components.SectionIndex
 import java.io.FileNotFoundException
 
 @Composable
