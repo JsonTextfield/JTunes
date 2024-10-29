@@ -30,7 +30,11 @@ fun GalleryTilePreview() {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GalleryTile(title: String, bitmap: Bitmap? = null, onClick: () -> Unit = {}) {
+fun GalleryTile(
+    title: String = "",
+    bitmap: Bitmap? = null,
+    onClick: () -> Unit = {},
+) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
