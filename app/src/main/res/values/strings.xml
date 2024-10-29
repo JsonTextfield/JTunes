@@ -18,6 +18,7 @@
     <string name="recently_added">Recently Added</string>
     <string name="recently_played">Recently Played</string>
     <string name="most_played">Most Played</string>
+    <string name="time_remaining">%d:%02d / %d:%02d</string>
 
     <plurals name="songs">
         <item quantity="one">1 song</item>
