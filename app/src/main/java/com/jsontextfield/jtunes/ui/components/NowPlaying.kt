@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -61,10 +62,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jsontextfield.jtunes.entities.Song
+import com.jsontextfield.jtunes.ui.viewmodels.MusicState
 import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
 import kotlin.math.cos
@@ -301,8 +306,8 @@ fun NowPlayingLarge(
                         ) {
                             SongInfo(song)
                             PlayerControls(
-                                musicViewModel = musicViewModel,
                                 modifier = Modifier.weight(1f),
+                                musicState = musicState,
                                 song.duration,
                                 position,
                                 musicViewModel::onPlayerAction,
@@ -318,7 +323,7 @@ fun NowPlayingLarge(
                             .fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        HorizontalPager(pagerState, modifier = Modifier.weight(1f)) { index ->
+                        HorizontalPager(pagerState, modifier = Modifier.padding(vertical = 50.dp)) { index ->
                             var bitmap: Bitmap? by remember { mutableStateOf(null) }
                             LaunchedEffect(index, currentSong) {
                                 songList[index].let { song ->
@@ -333,7 +338,7 @@ fun NowPlayingLarge(
                                 Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .fillMaxWidth()
-                                    .padding(30.dp)
+                                    .padding(horizontal = 30.dp)
                             ) {
                                 CoverArt(bitmap)
                             }
@@ -341,8 +346,8 @@ fun NowPlayingLarge(
                         SongInfo(song, modifier = Modifier.height(IntrinsicSize.Min))
                         val coroutineScope = rememberCoroutineScope()
                         PlayerControls(
-                            musicViewModel = musicViewModel,
-                            modifier = Modifier.height(IntrinsicSize.Min),
+                            modifier = Modifier.fillMaxHeight(),
+                            musicState = musicState,
                             song.duration,
                             position,
                             onPlayerButtonPressed = {
@@ -363,4 +368,21 @@ fun NowPlayingLarge(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun NowPlayingLargePreview() {
+    val musicViewModel = MusicViewModel(
+        _musicState = MutableStateFlow(
+            MusicState(
+                currentSong = Song(
+                    title = "Song",
+                    artist = "Artist",
+                    album = "Album",
+                ),
+            )
+        )
+    )
+    NowPlayingLarge(musicViewModel = musicViewModel)
 }

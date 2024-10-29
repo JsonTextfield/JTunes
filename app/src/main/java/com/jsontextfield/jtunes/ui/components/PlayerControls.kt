@@ -1,5 +1,6 @@
 package com.jsontextfield.jtunes.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,27 +23,35 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
-import com.jsontextfield.jtunes.ui.viewmodels.MusicViewModel
+import com.jsontextfield.jtunes.R
+import com.jsontextfield.jtunes.ui.viewmodels.MusicState
 
-enum class PlayerButton { PLAY_PAUSE, NEXT, PREVIOUS, PREVIOUS_SONG, SHUFFLE, LOOP, }
+enum class PlayerButton {
+    PLAY_PAUSE,
+    NEXT,
+    PREVIOUS,
+    PREVIOUS_SONG,
+    SHUFFLE,
+    LOOP,
+}
 
 @Composable
 fun PlayerControls(
-    musicViewModel: MusicViewModel,
     modifier: Modifier = Modifier,
+    musicState: MusicState = MusicState(),
     songDuration: Long = 0L,
     position: Float = 0f,
     onPlayerButtonPressed: (PlayerButton) -> Unit = {},
     onSeek: (value: Float) -> Unit = {},
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
         Slider(
             modifier = Modifier.padding(horizontal = 20.dp),
             value = position,
@@ -59,8 +68,8 @@ fun PlayerControls(
         val timeMinutes = (position / 1000 / 60).toInt()
         val timeSeconds = (position / 1000 % 60).toInt()
         Text(
-            String.format(
-                "%d:%02d / %d:%02d",
+            stringResource(
+                R.string.time_remaining,
                 timeMinutes,
                 timeSeconds,
                 durationMinutes,
@@ -72,16 +81,13 @@ fun PlayerControls(
                 .fillMaxWidth()
                 .padding(5.dp)
         )
-        Row {
-            val musicState by musicViewModel.musicState.collectAsState()
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             val isPlaying = musicState.isPlaying
             val isShuffling = musicState.isShuffling
             val loopMode = musicState.loopMode
             IconButton(
                 onClick = { onPlayerButtonPressed(PlayerButton.SHUFFLE) },
-                modifier = Modifier
-                    .size(60.dp)
-                    .weight(1f)
+                modifier = Modifier.size(60.dp)
             ) {
                 Icon(
                     imageVector = if (isShuffling) Icons.Rounded.ShuffleOn else Icons.Rounded.Shuffle,
@@ -91,9 +97,7 @@ fun PlayerControls(
             }
             IconButton(
                 onClick = { onPlayerButtonPressed(PlayerButton.PREVIOUS) },
-                modifier = Modifier
-                    .size(60.dp)
-                    .weight(1f)
+                modifier = Modifier.size(60.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
@@ -104,9 +108,7 @@ fun PlayerControls(
 
             IconButton(
                 onClick = { onPlayerButtonPressed(PlayerButton.PLAY_PAUSE) },
-                modifier = Modifier
-                    .size(60.dp)
-                    .weight(1f)
+                modifier = Modifier.size(60.dp)
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
@@ -116,9 +118,7 @@ fun PlayerControls(
             }
             IconButton(
                 onClick = { onPlayerButtonPressed(PlayerButton.NEXT) },
-                modifier = Modifier
-                    .size(60.dp)
-                    .weight(1f)
+                modifier = Modifier.size(60.dp)
             ) {
                 Icon(
                     Icons.Rounded.SkipNext,
@@ -128,9 +128,7 @@ fun PlayerControls(
             }
             IconButton(
                 onClick = { onPlayerButtonPressed(PlayerButton.LOOP) },
-                modifier = Modifier
-                    .size(60.dp)
-                    .weight(1f)
+                modifier = Modifier.size(60.dp)
             ) {
                 Icon(
                     imageVector = when (loopMode) {
@@ -144,4 +142,10 @@ fun PlayerControls(
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun PlayerControlsPreview() {
+    PlayerControls()
 }

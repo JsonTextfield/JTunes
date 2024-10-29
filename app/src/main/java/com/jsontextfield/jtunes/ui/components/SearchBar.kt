@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -29,7 +30,7 @@ fun SearchBar(
     value: String = ""
 ) {
     OutlinedTextField(
-        shape = RoundedCornerShape(100.dp),
+        shape = RoundedCornerShape(10.dp),
         modifier = modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         value = value,
@@ -49,4 +50,10 @@ fun SearchBar(
         },
         maxLines = 1, placeholder = { Text(hintText, maxLines = 1, modifier = Modifier.basicMarquee()) },
     )
+}
+
+@Preview
+@Composable
+fun SearchBarPreview() {
+    SearchBar(hintText = "Search from 10 songs")
 }
